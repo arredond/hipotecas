@@ -323,6 +323,7 @@ footer p { margin: 0 0 4px; }
           <div class="f">
             <label for="euribor">Euríbor actual</label>
             <div class="inp"><input id="euribor" type="text" inputmode="decimal" autocomplete="off"><span class="u">%</span></div>
+            <div class="hint" id="eurFuente" style="margin-top:4px"></div>
           </div>
           <div class="f">
             <label for="diferencial">Diferencial, sin bonif.</label>
@@ -618,7 +619,7 @@ footer p { margin: 0 0 4px; }
   const defaults = () => ({
     importe: 200000, plazo: 30, modalidad: 'fijo', tipoFijo: 3.0,
     tipoMixto: 2.6, aniosFijos: 10, bonifTramoFijo: true, bonifTramoVar: true,
-    euribor: 2.2, diferencial: 1.0, escenario: 'constante', eurObjetivo: 3.0, eurAnios: 5, eurManual: [],
+    euribor: 3.26, eurAuto: true, diferencial: 1.0, escenario: 'constante', eurObjetivo: 3.0, eurAnios: 5, eurManual: [],
     tope: 1.0, comisionCuenta: 0, orden: 'balance', preset: 'custom', custom: null,
     productos: defaultProductos()
   });
@@ -629,7 +630,11 @@ footer p { margin: 0 0 4px; }
   function load() {
     try {
       const s = JSON.parse(localStorage.getItem(LS_KEY));
-      if (s && Array.isArray(s.productos)) return Object.assign(defaults(), s);
+      if (s && Array.isArray(s.productos)) {
+        // Estados anteriores a eurAuto: solo se actualiza si seguía el valor por defecto de entonces
+        if (!('eurAuto' in s)) s.eurAuto = s.euribor === 2.2;
+        return Object.assign(defaults(), s);
+      }
     } catch (e) { /* sin almacenamiento */ }
     return defaults();
   }
@@ -776,6 +781,7 @@ footer p { margin: 0 0 4px; }
       el.closest('.inp').classList.toggle('invalid', !ok);
       if (!ok) return;
       state[f.id] = v;
+      if (f.id === 'euribor') state.eurAuto = false;
       if (f.id === 'tope') markCustom();
       if (f.id === 'plazo' || f.id === 'aniosFijos') renderManual();
       if (f.id === 'aniosFijos') updateModeUI();
@@ -1371,6 +1377,24 @@ footer p { margin: 0 0 4px; }
   updateThemeIcon();
   recalc();
   renderEsc();
+
+  /* ---------- Euríbor oficial (media mensual, BCE) ---------- */
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  fetch('https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.RT.MM.EURIBOR1YD_.HSTA?lastNObservations=1&detail=dataonly&format=csvdata')
+    .then(r => r.ok ? r.text() : Promise.reject())
+    .then(csv => {
+      const [cab, fila] = csv.trim().split(/\r?\n/).map(l => l.split(','));
+      const periodo = fila[cab.indexOf('TIME_PERIOD')], v = Math.round(parseFloat(fila[cab.indexOf('OBS_VALUE')]) * 1000) / 1000;
+      if (!validNum(v, numFields.find(f => f.id === 'euribor'))) return;
+      const [a, m] = periodo.split('-').map(Number);
+      $('#eurFuente').textContent = `Media de ${MESES[m - 1]} ${a}: ${pctR(v)} (BCE)`;
+      if (state.eurAuto && state.euribor !== v) {
+        state.euribor = v;
+        $('#euribor').value = fmtInput(v, 'rate');
+        renderManual(); recalc();
+      }
+    })
+    .catch(() => { /* sin conexión: se mantiene el valor por defecto */ });
 })();
 </script>
 </body>
