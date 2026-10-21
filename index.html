@@ -4,6 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Simulador de hipoteca bonificada</title>
+<meta name="description" content="Simulador de hipotecas fijas, variables y mixtas con bonificaciones de los principales bancos españoles. ¿Compensan los productos vinculados? Sin datos personales: todo se calcula en tu navegador.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>">
+<!-- Vista previa al compartir el enlace (WhatsApp, LinkedIn, etc.) -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="Simulador de hipoteca bonificada">
+<meta property="og:description" content="Fija, variable o mixta. ¿Compensan los productos vinculados? Sin datos personales: todo se calcula en tu navegador.">
+<meta property="og:url" content="https://hipotecas.arredon.do/">
+<meta property="og:image" content="https://hipotecas.arredon.do/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Simulador de hipoteca bonificada">
+<meta name="twitter:card" content="summary_large_image">
 <script>
   try { const t = localStorage.getItem('simHipTheme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
 </script>
@@ -514,12 +527,13 @@ footer p { margin: 0 0 4px; }
       ]
     },
     sabadell: {
-      nombre: 'Sabadell', tope: 0.30,
-      fuente: 'Condiciones informadas por el banco (oct. 2026): unos 0,30 p.p. de diferencia entre el tipo con hogar, vida y nómina y el tipo sin ellos, sin desglose por producto. El reparto de 0,10 por producto es un supuesto. Costes estimados.',
+      nombre: 'Sabadell', tope: 1.00,
+      fuente: 'Desglose de bonificaciones por producto (oct. 2026), hasta 1,00 p.p. en total. Costes estimados.',
       productos: [
-        ['Nómina', 0.10, 0, 'Reparto supuesto'],
-        ['Seguro de hogar', 0.10, 250, 'Reparto supuesto'],
-        ['Seguro de vida', 0.10, 350, 'Reparto supuesto']
+        ['Nómina, pensión o ingresos de autónomo', 0.40, 0, ''],
+        ['Seguro de vida', 0.40, 350, ''],
+        ['Seguro de hogar', 0.10, 250, ''],
+        ['Seguro de protección de pagos', 0.10, 300, '']
       ]
     },
     bankinter: {
