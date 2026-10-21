@@ -194,6 +194,13 @@ tr.off .pname, tr.off .cell-inp { color: var(--faint); }
 .del:hover { color: var(--bad); background: var(--bad-soft); }
 .ptable tfoot td { border-bottom: 0; font-size: 13px; padding-top: 8px; }
 .over { color: var(--warn); font-size: 12px; }
+.h2row { display: flex; align-items: center; gap: 10px; }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 400; text-transform: none; letter-spacing: normal; color: var(--text); cursor: pointer; user-select: none; }
+.switch input { appearance: none; -webkit-appearance: none; position: relative; width: 32px; height: 18px; margin: 0; border-radius: 9px; background: var(--border-strong); cursor: pointer; transition: background .15s; flex: none; }
+.switch input::before { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.switch input:checked { background: var(--accent); }
+.switch input:checked::before { transform: translateX(14px); }
+.switch input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Resultado */
 .hero .label { font-size: 12px; color: var(--muted); }
@@ -300,7 +307,7 @@ footer p { margin: 0 0 4px; }
 
       <div id="bFijo">
         <div class="f">
-          <label for="tipoFijo">Tipo nominal anual, sin bonificar</label>
+          <label for="tipoFijo">Tipo nominal anual<span class="sinB">, sin bonificar</span></label>
           <div class="inp"><input id="tipoFijo" type="text" inputmode="decimal" autocomplete="off"><span class="u">%</span></div>
         </div>
       </div>
@@ -312,7 +319,7 @@ footer p { margin: 0 0 4px; }
             <div class="inp"><input id="aniosFijos" type="text" inputmode="numeric" autocomplete="off"><span class="u">años</span></div>
           </div>
           <div class="f">
-            <label for="tipoMixto">Tipo fijo, sin bonif.</label>
+            <label for="tipoMixto">Tipo fijo<span class="sinB">, sin bonif.</span></label>
             <div class="inp"><input id="tipoMixto" type="text" inputmode="decimal" autocomplete="off"><span class="u">%</span></div>
           </div>
         </div>
@@ -326,7 +333,7 @@ footer p { margin: 0 0 4px; }
             <div class="hint" id="eurFuente" style="margin-top:4px"></div>
           </div>
           <div class="f">
-            <label for="diferencial">Diferencial, sin bonif.</label>
+            <label for="diferencial">Diferencial<span class="sinB">, sin bonif.</span></label>
             <div class="inp"><input id="diferencial" type="text" inputmode="decimal" autocomplete="off"><span class="u">%</span></div>
           </div>
         </div>
@@ -369,7 +376,9 @@ footer p { margin: 0 0 4px; }
 
     <!-- Bonificaciones -->
     <section class="card" id="cardBonif">
-      <h2>Bonificaciones</h2>
+      <h2 class="h2row">Bonificaciones<label class="switch"><input type="checkbox" role="switch" id="conBonif" aria-label="Aplicar bonificaciones" title="Aplicar bonificaciones"></label></h2>
+      <p class="hint" id="sinBonifHint" style="margin:0">Sin bonificaciones: se aplica el tipo tal cual, sin productos vinculados (p. ej., hipotecas que no se bonifican).</p>
+      <div id="bonifBody">
       <div class="toolbar">
         <div class="f" style="flex:1 1 180px">
           <label for="preset">Condiciones de banco</label>
@@ -397,6 +406,7 @@ footer p { margin: 0 0 4px; }
       </table>
       <div id="overTope"></div>
       <p class="hint" style="margin:10px 0 0">Si un seguro lo contratarías de todos modos, pon como coste solo lo que pagas de más frente a la alternativa más barata.</p>
+      </div>
     </section>
 
     <!-- Resultado -->
@@ -431,7 +441,7 @@ footer p { margin: 0 0 4px; }
   </section>
 
   <!-- Comparativa -->
-  <section class="card block">
+  <section class="card block" id="cmpCard">
     <details open>
       <summary>Comparativa de combinaciones</summary>
       <div class="cmp-head">
@@ -618,7 +628,7 @@ footer p { margin: 0 0 4px; }
 
   const defaults = () => ({
     importe: 200000, plazo: 30, modalidad: 'fijo', tipoFijo: 3.0,
-    tipoMixto: 2.6, aniosFijos: 10, bonifTramoFijo: true, bonifTramoVar: true,
+    tipoMixto: 2.6, aniosFijos: 10, conBonif: true, bonifTramoFijo: true, bonifTramoVar: true,
     euribor: 3.26, eurAuto: true, diferencial: 1.0, escenario: 'constante', eurObjetivo: 3.0, eurAnios: 5, eurManual: [],
     tope: 1.0, comisionCuenta: 0, orden: 'balance', preset: 'custom', custom: null,
     productos: defaultProductos()
@@ -769,6 +779,7 @@ footer p { margin: 0 0 4px; }
     document.querySelectorAll('input[name=modalidad]').forEach(r => { r.checked = r.value === state.modalidad; });
     $('#escenario').value = state.escenario;
     $('#orden').value = state.orden;
+    $('#conBonif').checked = state.conBonif;
     $('#bonifTramoFijo').checked = state.bonifTramoFijo;
     $('#bonifTramoVar').checked = state.bonifTramoVar;
   }
@@ -798,6 +809,9 @@ footer p { margin: 0 0 4px; }
   ['bonifTramoFijo', 'bonifTramoVar'].forEach(id => $('#' + id).addEventListener('change', e => {
     state[id] = e.target.checked; recalc();
   }));
+  $('#conBonif').addEventListener('change', e => {
+    state.conBonif = e.target.checked; verTodas = false; updateModeUI(); recalc();
+  });
   $('#escenario').addEventListener('change', e => {
     const nuevo = e.target.value;
     if (nuevo === 'manual') state.eurManual = euriborPath();
@@ -817,7 +831,12 @@ footer p { margin: 0 0 4px; }
     $('#bFijo').hidden = m !== 'fijo';
     $('#bMixto').hidden = m !== 'mixto';
     $('#bVariable').hidden = m === 'fijo';
-    $('#bBonifTramos').hidden = m !== 'mixto';
+    const cb = state.conBonif;
+    $('#bBonifTramos').hidden = m !== 'mixto' || !cb;
+    $('#bonifBody').hidden = !cb;
+    $('#sinBonifHint').hidden = cb;
+    $('#cmpCard').hidden = !cb;
+    document.querySelectorAll('.sinB').forEach(el => { el.hidden = !cb; });
     $('#bLineal').hidden = state.escenario !== 'lineal';
     $('#bManual').hidden = state.escenario !== 'manual';
     $('#sensCard').hidden = m === 'fijo';
@@ -978,7 +997,8 @@ footer p { margin: 0 0 4px; }
       return s;
     };
 
-    const prods = st.productos, k = prods.length;
+    // Sin bonificaciones solo existe la combinación vacía.
+    const prods = st.conBonif ? st.productos : [], k = prods.length;
     const combos = [];
     combo: for (let mask = 0; mask < (1 << k); mask++) {
       let sb = 0, prima = 0, fin = 0; const nombres = [], grupos = new Set();
@@ -1052,37 +1072,41 @@ footer p { margin: 0 0 4px; }
     $('#rCuota').textContent = eur(s.cuotaInicial);
 
     const ahorroMes = base.s.cuotaInicial - s.cuotaInicial;
-    let sub = sel.b > 0 && ahorroMes > 0.005
+    const cb = state.conBonif;
+    let sub = !cb ? '' : sel.b > 0 && ahorroMes > 0.005
       ? `${eur(ahorroMes)} menos que sin bonificar (${eur(base.s.cuotaInicial)})`
       : `Sin bonificar: ${eur(base.s.cuotaInicial)}`;
     if (iv !== null) {
       const c = s.filas[iv].cuota;
-      sub += m === 'mixto'
-        ? `<br>Desde el año ${iv + 1}: ${eur(c)} con Euríbor ${pctR(ctx.path[iv])}`
-        : `<br>Tras revisiones: entre ${eur(s.cuotaMin)} y ${eur(s.cuotaMax)}`;
+      sub += (sub ? '<br>' : '') + (m === 'mixto'
+        ? `Desde el año ${iv + 1}: ${eur(c)} con Euríbor ${pctR(ctx.path[iv])}`
+        : `Tras revisiones: entre ${eur(s.cuotaMin)} y ${eur(s.cuotaMax)}`);
     }
     $('#rCuotaSub').innerHTML = sub;
 
     const rows = [
-      ['Bonificación aplicada', pct(sel.b)],
+      ...(cb ? [['Bonificación aplicada', pct(sel.b)]] : []),
       ['Tipo aplicado', tipoTexto(ctx)],
       null,
       ['Total pagado', eur(s.total)],
       ['Intereses', eur(s.intereses)],
-      [`Coste productos (${A} años)`, eur(sel.prima * A)],
+      ...(cb ? [[`Coste productos (${A} años)`, eur(sel.prima * A)]] : []),
       ...(state.comisionCuenta > 0 ? [[`Comisiones de cuenta (${A} años)`, eur(state.comisionCuenta * A)]] : []),
       ['<span class="b">Coste total</span>', `<span class="b">${eur(s.intereses + (sel.prima + state.comisionCuenta) * A)}</span>`],
       ...(sel.fin > 0 ? [['Prima financiada en el préstamo', eur(sel.fin)]] : []),
-      null,
-      ['Ahorro en intereses', `${eur(sel.ahorroAnual)}/año`],
-      ['Coste de productos', `${eur(sel.prima)}/año`],
-      ['<span class="b">Balance neto</span>', `<span class="b ${cls(sel.balanceAnual)}">${signed(sel.balanceAnual, eur)}/año</span>`],
-      ['Balance en la vida del préstamo', `<span class="${cls(sel.balanceTotal, 0.5)}">${signed(sel.balanceTotal, v => eur(v, 0))}</span>`]
+      ...(cb ? [
+        null,
+        ['Ahorro en intereses', `${eur(sel.ahorroAnual)}/año`],
+        ['Coste de productos', `${eur(sel.prima)}/año`],
+        ['<span class="b">Balance neto</span>', `<span class="b ${cls(sel.balanceAnual)}">${signed(sel.balanceAnual, eur)}/año</span>`],
+        ['Balance en la vida del préstamo', `<span class="${cls(sel.balanceTotal, 0.5)}">${signed(sel.balanceTotal, v => eur(v, 0))}</span>`]
+      ] : [])
     ];
     $('#rKv').innerHTML = rows.map(r => r ? `<dt>${r[0]}</dt><dd>${r[1]}</dd>` : '<div class="sep"></div>').join('');
 
-    let note;
-    if (sel.mask === ctx.best.mask) note = '<div class="callout">Tu selección es la combinación con mejor balance neto.</div>';
+    let note = '';
+    if (!cb) { /* sin bonificaciones no hay combinaciones que comparar */ }
+    else if (sel.mask === ctx.best.mask) note = '<div class="callout">Tu selección es la combinación con mejor balance neto.</div>';
     else {
       const d = ctx.best.balanceAnual - sel.balanceAnual;
       note = `<div class="callout">Mejor balance: <strong>${escHtml(ctx.best.nombres.join(', ') || 'ningún producto')}</strong>, ${eur(d)}/año más que tu selección.</div>`;
@@ -1219,7 +1243,7 @@ footer p { margin: 0 0 4px; }
     }
     return r;
   }
-  const condicionesDe = st => PRESETS[st.preset] ? PRESETS[st.preset].nombre : 'Personalizado';
+  const condicionesDe = st => !st.conBonif ? 'Sin bonificaciones' : PRESETS[st.preset] ? PRESETS[st.preset].nombre : 'Personalizado';
   function modalidadDe(st) {
     if (st.modalidad === 'fijo') return `Fijo ${pctR(st.tipoFijo)}`;
     if (st.modalidad === 'variable') return `Variable E + ${pctR(st.diferencial)}`;
