@@ -496,100 +496,114 @@ footer p { margin: 0 0 4px; }
   const PRESETS = {
     santander: {
       nombre: 'Santander', tope: 1.00,
-      fuente: 'Tabla de bonificaciones de Banco Santander. Costes = primas mínimas exigidas. Topes por familia: Protección 1,00 %, Ahorro 0,30 %. Primera revisión a los 6 meses, después cada 12.',
+      fuente: 'Web de Banco Santander (oferta válida hasta el 15/11/2026): 3,96 % sin bonificar / 2,96 % bonificado; los 6 primeros meses, 2,96 % para todos. Costes = primas mínimas exigidas. Topes por familia: seguros 1,00 %, ahorro 0,30 %. Primera revisión a los 6 meses, después cada 12.',
+      url: 'https://www.bancosantander.es/particulares/hipotecas/hipoteca-fija',
       productos: [
-        ['Nómina + Bizum o tarjeta de crédito', 0.50, 0, 'Nómina > 1.000 €/mes; tarjeta con 6 movimientos/año'],
-        ['Seguro de protección de préstamos', 0.30, 300, 'Prima mínima 300 €/año'],
-        ['Seguro de hogar', 0.20, 300, 'Prima mínima 300 €/año'],
-        ['Vida no asociado, accidentes, IT, salud o auto', 0.10, 200, 'Prima mínima 200 €/año'],
-        ['Planes de pensiones, fondos, seguros de ahorro', 0.10, 0, 'Saldo mínimo 10.000 €']
+        ['Nómina + Bizum o tarjeta de crédito', 0.50, 0, 'Nómina ≥ 1.000 €/mes (pensión ≥ 600 €); Bizum o 6 usos de tarjeta de crédito en 3 meses'],
+        ['Seguro de protección de préstamos', 0.30, 300, 'Prima > 300 €/año'],
+        ['Seguro de hogar', 0.20, 300, 'Prima > 300 €/año'],
+        ['Vida, accidentes, IT, salud o auto', 0.10, 200, 'Prima > 200 €/año, por póliza'],
+        ['Planes de pensiones, fondos, seguros de ahorro', 0.10, 0, 'Saldo ≥ 10.000 €, por producto']
       ]
     },
     bbva: {
       nombre: 'BBVA', tope: 1.00,
-      fuente: 'Dos bloques de 0,50. Referencia fija: 3,95 % sin bonificar / 2,95 % bonificado; variable: Euríbor + 1,60 % / + 0,60 %. Costes estimados.',
-      url: 'https://hipotify.es/analisis-de-hipotecas/bbva/',
+      fuente: 'FIPRE de BBVA (02/10/2026) y web: 3,95 % sin bonificar / 2,95 % bonificado (20 a 30 años), con 1 punto de bonificación el primer mes para todos. Dos bloques de 0,50; en fija, revisión semestral. La FIPRE no detalla primas: costes estimados.',
+      url: 'https://www.bbva.es/content/dam/public-web/bbvaes/documents/productos/hipotecas/FIPRE.pdf',
       productos: [
-        ['Ingresos domiciliados + seguro de hogar', 0.50, 250, 'Nómina ≥ 600 €/mes (pensión ≥ 300 €) y hogar del grupo'],
-        ['Seguro de amortización de préstamo', 0.50, 350, 'Debe cubrir al menos el 50 % del préstamo']
+        ['Ingresos domiciliados + seguro de hogar', 0.50, 250, 'Nómina ≥ 600 €/mes (pensión ≥ 300 €) durante 6 meses seguidos y Multirriesgo Hogar BBVA Allianz'],
+        ['Seguro de amortización de préstamo', 0.50, 350, 'Debe cubrir al menos el 50 % del préstamo (máx. 150.000 €)']
       ]
     },
     caixabank: {
       nombre: 'CaixaBank', tope: 1.00,
-      fuente: 'Condiciones de la web oficial de CaixaBank (21/10/2026). El cumplimiento se comprueba cada mes y el tipo puede subir o bajar. Vida y salud son excluyentes entre sí. Costes estimados.',
+      fuente: 'Web de CaixaBank: 3,80 % sin bonificar / 2,80 % bonificado (30 años). Cumplimiento revisado cada mes. Vida y salud son excluyentes entre sí. Primas de los ejemplos del banco (vida para 30 años y 100 % del capital); vida parcial y salud, estimadas. Cuenta: 15 €/trimestre.',
+      url: 'https://www.caixabank.es/particular/hipotecas.html',
+      comisionCuenta: 60,
       productos: [
-        ['Nómina + 3 recibos + compras con tarjeta', 0.35, 0, 'Ingresos > 600 €/mes en los últimos 6 meses; al menos 3 compras con tarjeta en los últimos 3 meses'],
-        ['Seguro de hogar', 0.15, 250, ''],
-        ['Seguro de vida (≥ 95 % del préstamo)', 0.35, 350, 'MyBox Vida, Vida Familiar o SEVIAM', 'vida'],
-        ['Seguro de vida (50–95 % del préstamo)', 0.20, 250, 'Por debajo del 50 % no bonifica', 'vida'],
-        ['Seguro de salud', 0.20, 600, 'Salvo Adeslas Dental y Adeslas Básico', 'vida'],
-        ['Alarma Hogar Verisure', 0.15, 480, 'Cuota de alarma ≈ 40 €/mes']
+        ['Nómina + 3 recibos + compras con tarjeta', 0.35, 36, 'Ingresos > 600 €/mes en los últimos 6 meses; 3 compras con tarjeta en 3 meses. Tarjeta: 36 €/año'],
+        ['Seguro de hogar', 0.15, 317, ''],
+        ['Seguro de vida (≥ 95 % del préstamo)', 0.35, 266, 'MyBox Vida, Vida Familiar o SEVIAM', 'vida'],
+        ['Seguro de vida (50–95 % del préstamo)', 0.20, 200, 'Por debajo del 50 % no bonifica. Coste estimado', 'vida'],
+        ['Seguro de salud', 0.20, 600, 'Salvo Adeslas Dental y Adeslas Básico. Coste estimado', 'vida'],
+        ['Alarma Hogar Verisure', 0.15, 624, '52,03 €/mes']
       ]
     },
     sabadell: {
       nombre: 'Sabadell', tope: 1.00,
-      fuente: 'Desglose de bonificaciones por producto (oct. 2026), hasta 1,00 p.p. en total. Costes estimados.',
+      fuente: 'Reparto de la FIPRE de la hipoteca fija bonificada (julio 2025); tipos y primas de la web (3,75 % sin bonificar / 2,75 % bonificado; vida para 30 años). Bonificaciones acumulativas con revisión semestral.',
+      url: 'https://www.bancsabadell.com/bsnacional/es/particulares/hipotecas/hipoteca-fija/',
       productos: [
         ['Nómina, pensión o ingresos de autónomo', 0.40, 0, ''],
-        ['Seguro de vida', 0.40, 350, ''],
-        ['Seguro de hogar', 0.10, 250, ''],
-        ['Seguro de protección de pagos', 0.10, 300, '']
+        ['Seguro de vida', 0.40, 254, '63,38 €/trimestre'],
+        ['Seguro de hogar', 0.10, 156, '12,99 €/mes'],
+        ['Seguro de protección de pagos', 0.10, 340, 'Cubre la cuota en desempleo o baja laboral; hay que contratarlo al firmar el préstamo']
       ]
     },
     bankinter: {
       nombre: 'Bankinter', tope: 1.30,
-      fuente: 'Hipoteca fija: 4,80 % sin bonificar / 3,50 % bonificado (30 años). Costes estimados.',
-      url: 'https://www.economiaresponsablefinanzas.com/hipotecas/hipotecas-fijas/hipoteca-fija-bankinter/',
+      fuente: 'Web de Bankinter (oferta válida hasta el 15/11/2026): 4,80 % sin bonificar / 3,50 % bonificado. Requiere ingresos > 2.500 €/mes. Primas de su ejemplo; la de vida es la del primer año para 30 años y es renovable, así que subirá con la edad. Cuenta: 45 €/año. Revisión anual.',
+      url: 'https://www.bankinter.com/banca/hipotecas-prestamos/hipotecas/hipoteca-fija',
+      comisionCuenta: 45,
       productos: [
         ['Cuenta Nómina, Profesional o No-Nómina', 0.30, 0, ''],
-        ['Seguro de vida (100 % del préstamo)', 0.60, 400, ''],
-        ['Seguro multirriesgo hogar', 0.30, 250, ''],
-        ['Plan de pensiones / EPSV', 0.10, 0, 'Requiere aportaciones periódicas']
+        ['Seguro de vida (100 % del préstamo)', 0.60, 164, 'Prima del primer año; renovable'],
+        ['Seguro multirriesgo hogar', 0.30, 306, 'Contenido mínimo 30.000 €'],
+        ['Plan de pensiones / EPSV', 0.10, 0, 'Aportación ≥ 600 €/año; el dinero queda en el plan']
       ]
     },
     ing: {
       nombre: 'ING', tope: 0.50,
-      fuente: 'Hipoteca Naranja. Mixta 10 años: 4,20 % / E + 1,64 % sin bonificar; 3,70 % / E + 1,14 % bonificada. Costes estimados.',
-      url: 'https://www.helpmycash.com/hipotecas/ing/hipoteca-naranja-mixta',
+      fuente: 'FIPRE de la Hipoteca NARANJA Variable (09/10/2026): E + 1,10 % sin condiciones, E + 1,00 % con nómina y hogar, E + 0,60 % con nómina, hogar y vida. Primas de la FIPRE (vida para 30 años). Los tipos de referencia de ing.es (fija 3,79 % / 2,99 %) muestran más diferencia; la FIPRE es el documento oficial.',
+      url: 'https://www.ing.es/sobre-ing/pdf/InfPrecontractualFIPRE.pdf',
       productos: [
-        ['Nómina o saldo + seguro de hogar', 0.10, 250, 'Nómina ≥ 600 €/mes o saldo diario ≥ 2.000 €'],
-        ['Seguro de vida', 0.40, 350, '']
+        ['Nómina o saldo + seguro de hogar', 0.10, 269, 'Nómina o ingresos ≥ 600 €/mes, o saldo diario ≥ 2.000 €; HogarSeguro 269 €/año', 'nivel'],
+        ['Nómina o saldo + hogar + seguro de vida', 0.50, 606, 'Lo anterior más Seguro de Vida Hipoteca por el 100 % del préstamo (337 €/año). El seguro de vida solo bonifica junto con nómina y hogar', 'nivel']
       ]
     },
     kutxabank: {
       nombre: 'Kutxabank', tope: 1.10,
-      fuente: 'Condiciones informadas por el banco para la hipoteca PH Joven (oct. 2026). La bonificación por edad dura hasta los 35 años, pero el simulador la aplica a todo el plazo. Revisión anual de bonificaciones. Costes estimados.',
+      fuente: 'Reparto informado por el banco para la hipoteca PH Joven (oct. 2026); la FIPRE oficial (mayo 2026) no publica porcentajes, que fija la oferta personalizada. La bonificación por edad dura hasta los 35 años, pero el simulador la aplica a todo el plazo. Revisión anual. Seguro de hogar Kutxabank: 397 €/año en la FIPRE, frente a 101 € del básico obligatorio.',
+      url: 'https://portal.kutxabank.es/cs/Satellite?blobcol=urldata&blobheader=application%2Fpdf&blobheadername1=content-type&blobheadername2=Expires&blobheadername3=MDT-Type&blobheadername4=Content-disposition&blobheadervalue1=application%2Fpdf&blobheadervalue2=Thu%2C+10+Dec+2030+16%3A00%3A00+GMT&blobheadervalue3=abinary%3Bcharset%3DUTF-8&blobheadervalue4=inline%3B+filename%3D%22kb+fipre+%28p.h.%29-cas+05_26.pdf%22&blobkey=id&blobtable=MungoBlobs&blobwhere=1312554618055&ssbinary=true',
       productos: [
         ['Nómina + tarjetas', 0.60, 0, 'Domiciliar la nómina; consumo con tarjetas ≈ 1.200 €/año'],
         ['Seguro de hogar', 0.10, 300, 'Prima única ≈ 1.500 € cada 5 años', '', 1500],
-        ['Seguro de vida', 0.10, 350, ''],
+        ['Seguro de vida', 0.10, 350, 'Coste estimado'],
         ['Fondos o planes de pensiones', 0.20, 0, 'Aportación ≥ 2.400 €/año (mín. 200 €/mes); el dinero queda en el fondo'],
         ['Menor de 35 años', 0.10, 0, 'Solo hasta cumplir 35']
       ]
     },
     ibercaja: {
       nombre: 'Ibercaja', tope: 1.00,
-      fuente: 'Hipoteca Fija Vamos: 3,55 % sin bonificar / 2,55 % bonificado, en un único paquete (web de Ibercaja, válida hasta el 31/10/2026). Coste estimado (hogar + vida).',
+      fuente: 'Hipoteca Fija Vamos (web de Ibercaja, válida hasta el 31/10/2026): 3,55 % sin bonificar / 2,55 % bonificado, en un único paquete; el primer año, 2,55 % para todos. Desde 100.000 €. Revisión semestral. Primas de su ejemplo. Cuenta: 30 €/trimestre.',
       url: 'https://www.ibercaja.es/particulares/hipotecas-prestamos/hipotecas/hipoteca-vamos-fija/',
+      comisionCuenta: 120,
       productos: [
-        ['Paquete: nómina, tarjeta, recibos, hogar, vida y fondo', 1.00, 600, 'Nómina ≥ 2.500 €/mes; tarjeta ≥ 12 operaciones/semestre; ≥ 3 recibos; aportación ≥ 75 €/mes a fondo Ibercaja']
+        ['Paquete: nómina, tarjeta, recibos, hogar, vida y fondo', 1.00, 684, 'Nómina ≥ 2.500 €/mes; tarjeta ≥ 12 operaciones/semestre; ≥ 3 recibos; aportación ≥ 75 €/mes a fondo Ibercaja. Coste: hogar 242 €, vida 400 €, tarjeta 42 €']
       ]
     },
     unicaja: {
       nombre: 'Unicaja', tope: 1.00,
-      fuente: 'Hipoteca fija: 4,20 % sin bonificar / 3,20 % bonificado, en un único paquete. Otros comparadores dan desgloses por producto distintos. Coste estimado (hogar + vida).',
-      url: 'https://www.helpmycash.com/hipotecas/unicaja/hipoteca-fija-unicaja/',
+      fuente: 'Web de Unicaja: 4,20 % sin bonificar / 3,20 % bonificado con nómina ≥ 2.000 € (4,40 % / 3,40 % con menos); el primer semestre, 3,25 %. La web solo publica la combinación de máxima bonificación, sin reparto por producto. Costes de su ejemplo; la cuenta (120 €/año) solo se cobra con bonificación.',
+      url: 'https://www.unicajabanco.es/es/particulares/hipotecas-y-prestamos/hipotecas/hipoteca-tipo-fijo',
       productos: [
-        ['Paquete: nómina, tarjeta, hogar, vida y plan de pensiones', 1.00, 600, 'Nómina ≥ 2.000 € netos/mes; tarjeta ≥ 600 €/semestre; aportación al plan ≥ 0,6 % del capital pendiente/año']
+        ['Paquete: nómina, tarjeta, hogar, vida y plan de pensiones', 1.00, 829, 'Tarjeta ≥ 600 €/semestre; aportación al plan del 0,6 % semestral del capital pendiente. Coste: hogar 268 €, vida 359 €, cuenta 120 €, tarjeta 48 €, gestión del plan 35 €']
       ]
     },
     abanca: {
-      nombre: 'ABANCA', tope: 0.70, comisionCuenta: 160,
-      fuente: 'Condiciones informadas por el banco para la Hipoteca Mari Carmen Fija (oct. 2026). Cuenta obligatoria: 40 €/trimestre, salvo cuenta clara. Costes estimados.',
+      nombre: 'ABANCA', tope: 1.00, comisionCuenta: 160,
+      fuente: 'Hipoteca Mari Carmen Fija (web de ABANCA): 4,15 % sin bonificar / 3,15 % bonificado. Las opciones de nómina son excluyentes entre sí. Primas de su ejemplo (30 años, 150.000 €), repartidas por año a 30 años. Cuenta: 40 €/trimestre. Revisión anual.',
+      url: 'https://www.abanca.com/es/hipotecas/hipoteca-maricarmen-fija/',
       productos: [
-        ['Nómina o seguros sociales', 0.25, 0, 'Nómina de 800 a 2.500 €/mes'],
-        ['Seguro de hogar', 0.20, 400, ''],
-        ['Seguro de vida (prima única)', 0.25, 380, 'Prima única ≈ 3.800 € para 10 años']
+        ['Nómina de 800 a 2.500 €/mes o seguros sociales', 0.20, 0, 'Ingreso recurrente en un único apunte', 'nomina'],
+        ['Nómina ≥ 2.500 €/mes', 0.40, 0, 'O ≥ 3.500 € en varios ingresos, o seguros sociales + saldo medio ≥ 2.000 €', 'nomina'],
+        ['Nómina > 800 € + seguro de protección de pagos', 0.40, 709, 'Prima única 3.260,72 € los 5 primeros años; después 720 €/año', 'nomina', 3261],
+        ['Seguro de vida (100 % del saldo)', 0.30, 350, 'Prima única 3.484,54 € los 10 primeros años; después ≈ 351 €/año', '', 3485],
+        ['Seguro de hogar', 0.20, 314, ''],
+        ['Tarjeta de crédito', 0.10, 43, '36 compras/año o ≥ 3.000 €/año; cuota 43 €/año (1.er año gratis)'],
+        ['Plan de pensiones', 0.10, 0, 'Aportación ≥ 1.500 €/año o derechos ≥ 5.000 €'],
+        ['Alarma Sector Alarm', 0.10, 515, '42,90 €/mes + 49 € de instalación'],
+        ['Fondos de inversión', 0.10, 0, 'Valor ≥ 100.000 €']
       ]
     }
   };
