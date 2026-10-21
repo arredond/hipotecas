@@ -260,6 +260,10 @@ dialog.dlg::backdrop { background: rgba(10, 14, 18, .55); }
 .dlg p { margin: 0 0 14px; font-size: 14px; line-height: 1.55; }
 .dlg a { color: var(--accent); overflow-wrap: anywhere; }
 .dlg .aviso { font-size: 13px; color: var(--warn); }
+.dlg ul { margin: 0 0 14px; padding-left: 20px; font-size: 14px; line-height: 1.55; }
+.dlg-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 4px 0 16px; }
+.btn.danger { color: var(--bad); border-color: var(--bad); }
+.btn.danger:hover { background: var(--bad-soft); }
 footer { font-size: 11px; color: var(--faint); margin-top: 16px; line-height: 1.5; }
 footer p { margin: 0 0 4px; }
 </style>
@@ -276,6 +280,9 @@ footer p { margin: 0 0 4px; }
       </button>
       <button class="btn icon" id="info" type="button" aria-label="Acerca de este simulador" title="Acerca de este simulador">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>
+      </button>
+      <button class="btn icon" id="borrar" type="button" aria-label="Borrar todo el contenido local" title="Borrar todo el contenido local">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
       </button>
     </div>
   </div>
@@ -489,6 +496,25 @@ footer p { margin: 0 0 4px; }
     <p>Cuando estaba buscando hipoteca, me frustraban mucho los comparadores de hipoteca online que intentan recabar tu información personal. Por suerte, acabé encontrando el <a href="https://clientebancario.bde.es/pcb/es/menu-horizontal/podemosayudarte/simuladores/simulador_prestamo_hipotecario_personal.html" target="_blank" rel="noopener">simulador del Banco de España</a>, pero no tiene en cuenta hipotecas bonificadas o mixtas.</p>
     <p>Esta aplicación no requiere ningún tipo de información personal. Todo el cálculo ocurre en tu propio navegador, y los escenarios simulados que elijas guardar también se almacenan en tu equipo. Es una simple página de HTML disponible públicamente aquí: <a href="https://github.com/arredond/hipotecas" target="_blank" rel="noopener">https://github.com/arredond/hipotecas</a></p>
     <p class="aviso"><strong>Aviso:</strong> la información sobre bonificaciones de cada banco está recabada en octubre de 2026. Puede cambiar en el futuro cercano.</p>
+  </div>
+</dialog>
+
+<dialog class="dlg" id="borrarDlg" aria-labelledby="borrarTitle">
+  <div class="dlg-body">
+    <button class="del dlg-close" type="button" id="borrarClose" aria-label="Cerrar">×</button>
+    <h2 id="borrarTitle">Borrar todo el contenido local</h2>
+    <p>Se eliminarán todos los datos que esta aplicación guarda en tu navegador:</p>
+    <ul>
+      <li>Escenarios guardados.</li>
+      <li>Importes, plazo, tipos de interés y euríbor introducidos.</li>
+      <li>Banco seleccionado, bonificaciones y productos personalizados.</li>
+      <li>Preferencia de tema claro/oscuro.</li>
+    </ul>
+    <p>La página se recargará con los valores por defecto. Esta acción no se puede deshacer.</p>
+    <div class="dlg-actions">
+      <button class="btn" type="button" id="borrarCancel">Cancelar</button>
+      <button class="btn danger" type="button" id="borrarOk">Borrar todo</button>
+    </div>
   </div>
 </dialog>
 
@@ -1375,6 +1401,20 @@ footer p { margin: 0 0 4px; }
   $('#infoClose').addEventListener('click', () => infoDlg.close());
   // Clic fuera del contenido (en el fondo) cierra el diálogo.
   infoDlg.addEventListener('click', e => { if (e.target === infoDlg) infoDlg.close(); });
+
+  /* ---------- Borrar contenido local ---------- */
+  const borrarDlg = $('#borrarDlg');
+  $('#borrar').addEventListener('click', () => borrarDlg.showModal());
+  $('#borrarClose').addEventListener('click', () => borrarDlg.close());
+  $('#borrarCancel').addEventListener('click', () => borrarDlg.close());
+  borrarDlg.addEventListener('click', e => { if (e.target === borrarDlg) borrarDlg.close(); });
+  $('#borrarOk').addEventListener('click', () => {
+    try {
+      // Todas las claves de la aplicación empiezan por «simHip».
+      Object.keys(localStorage).filter(k => k.startsWith('simHip')).forEach(k => localStorage.removeItem(k));
+    } catch (e) { /* sin almacenamiento */ }
+    location.reload();
+  });
 
   /* ---------- Tema ---------- */
   const root = document.documentElement;
