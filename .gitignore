@@ -1,0 +1,5 @@
+# Notas locales: solo se publica el README
+*.md
+!README.md
+.DS_Store
+.wrangler/

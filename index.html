@@ -1,0 +1,1109 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de hipoteca bonificada</title>
+<script>
+  try { const t = localStorage.getItem('simHipTheme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
+<style>
+:root {
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --text: #1d2329;
+  --muted: #646d78;
+  --faint: #8b939c;
+  --border: #dadee3;
+  --border-strong: #c3c9d0;
+  --accent: #1d5b8f;
+  --accent-soft: #eaf1f8;
+  --good: #17764a;
+  --good-soft: #eaf5ef;
+  --bad: #b42318;
+  --bad-soft: #fcebea;
+  --warn: #8a5300;
+  --input: #ffffff;
+  --head: #f7f8fa;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111418;
+    --card: #191d22;
+    --text: #e4e7eb;
+    --muted: #9aa3ad;
+    --faint: #737c86;
+    --border: #2c3239;
+    --border-strong: #3d444d;
+    --accent: #6ea8dc;
+    --accent-soft: #1a2633;
+    --good: #5cc28d;
+    --good-soft: #15261d;
+    --bad: #f0857a;
+    --bad-soft: #321a18;
+    --warn: #e2b55c;
+    --input: #13171b;
+    --head: #1e2329;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418;
+  --card: #191d22;
+  --text: #e4e7eb;
+  --muted: #9aa3ad;
+  --faint: #737c86;
+  --border: #2c3239;
+  --border-strong: #3d444d;
+  --accent: #6ea8dc;
+  --accent-soft: #1a2633;
+  --good: #5cc28d;
+  --good-soft: #15261d;
+  --bad: #f0857a;
+  --bad-soft: #321a18;
+  --warn: #e2b55c;
+  --input: #13171b;
+  --head: #1e2329;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px; }
+header { border-bottom: 1px solid var(--border); background: var(--card); }
+header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 52px; }
+h1 { margin: 0; font-size: 15px; font-weight: 600; }
+.hdr-actions { display: flex; gap: 6px; }
+main { padding-top: 16px; padding-bottom: 32px; }
+
+.top { display: grid; grid-template-columns: 290px minmax(0, 1fr) 330px; gap: 14px; }
+@media (max-width: 1180px) {
+  .top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  #cardBonif { grid-column: 1 / -1; order: 3; }
+}
+@media (max-width: 700px) { .top { grid-template-columns: minmax(0, 1fr); } }
+
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; min-width: 0; }
+.block { margin-top: 14px; }
+h2 { margin: 0 0 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+
+.f { margin-bottom: 10px; }
+.f > label, .f > .lbl { display: block; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+.f2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+.inp {
+  display: flex; align-items: center; height: 32px; padding: 0 8px; gap: 4px;
+  background: var(--input); border: 1px solid var(--border-strong); border-radius: 4px;
+}
+.inp:focus-within { border-color: var(--accent); outline: 2px solid var(--accent-soft); }
+.inp input, .inp select {
+  flex: 1; min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: var(--text);
+  font: inherit; text-align: right; font-variant-numeric: tabular-nums; padding: 0;
+}
+.inp select { text-align: left; cursor: pointer; }
+.inp .u { color: var(--faint); font-size: 12px; }
+.inp.invalid, input.invalid { border-color: var(--bad) !important; background: var(--bad-soft) !important; }
+
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--border-strong); border-radius: 4px; overflow: hidden; }
+.seg label { text-align: center; padding: 6px 4px; cursor: pointer; font-size: 13px; user-select: none; border-left: 1px solid var(--border-strong); }
+.seg label:first-child { border-left: 0; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label:has(input:checked) { background: var(--accent); color: #fff; }
+:root[data-theme="dark"] .seg label:has(input:checked) { color: #0d1b28; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .seg label:has(input:checked) { color: #0d1b28; } }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -3px; }
+
+.chk { display: flex; align-items: center; gap: 6px; font-size: 13px; margin: 4px 0; cursor: pointer; }
+input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; cursor: pointer; }
+.divider { border-top: 1px solid var(--border); margin: 12px 0; }
+.hint { font-size: 12px; color: var(--muted); }
+[hidden] { display: none !important; }
+
+.eur-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; margin-top: 6px; }
+.eur-grid label { font-size: 11px; color: var(--muted); }
+.eur-grid input, .cell-inp {
+  width: 100%; height: 28px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--input);
+  color: var(--text); font: inherit; padding: 0 6px; text-align: right; font-variant-numeric: tabular-nums;
+}
+.cell-inp:focus, .eur-grid input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+
+.btn {
+  height: 30px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 4px; background: var(--card);
+  color: var(--text); font: inherit; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn.icon { width: 30px; padding: 0; justify-content: center; }
+.btn svg { width: 16px; height: 16px; }
+.link { border: 0; background: none; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; padding: 0; }
+.link:hover { text-decoration: underline; }
+.link:disabled { color: var(--faint); cursor: not-allowed; text-decoration: none; }
+
+/* Bonificaciones */
+.toolbar { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 8px; }
+.toolbar .f { margin: 0; }
+.src { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+.src a { color: var(--accent); }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); vertical-align: middle; }
+th { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--head); white-space: nowrap; line-height: 1.25; }
+th small { display: block; font-weight: 400; color: var(--faint); }
+th.l, td.l { text-align: left; }
+.ptable td { padding: 4px 6px; }
+.ptable th { padding: 5px 6px; }
+.ptable .w-chk { width: 28px; text-align: center; }
+.ptable .w-num { width: 92px; }
+.ptable .w-del { width: 28px; }
+.pname {
+  width: 100%; border: 1px solid transparent; background: transparent; color: var(--text); font: inherit;
+  padding: 3px 4px; border-radius: 4px;
+}
+.pname:hover, .pname:focus { border-color: var(--border-strong); background: var(--input); outline: 0; }
+.pnote { font-size: 11px; color: var(--faint); padding: 0 5px; }
+tr.off .pname, tr.off .cell-inp { color: var(--faint); }
+.del { border: 0; background: none; color: var(--faint); cursor: pointer; font-size: 15px; line-height: 1; padding: 4px; border-radius: 4px; }
+.del:hover { color: var(--bad); background: var(--bad-soft); }
+.ptable tfoot td { border-bottom: 0; font-size: 13px; padding-top: 8px; }
+.over { color: var(--warn); font-size: 12px; }
+
+/* Resultado */
+.hero .label { font-size: 12px; color: var(--muted); }
+.hero .big { font-size: 30px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; line-height: 1.2; margin: 2px 0; }
+.hero .sub { font-size: 12px; color: var(--muted); }
+.kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 10px; margin: 0; font-size: 13px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.kv .sep { grid-column: 1 / -1; border-top: 1px solid var(--border); margin: 3px 0; }
+.kv .b { font-weight: 600; }
+.good { color: var(--good); }
+.bad { color: var(--bad); }
+.callout { font-size: 12px; margin-top: 12px; padding: 8px 10px; border-radius: 4px; background: var(--head); color: var(--muted); }
+.callout.warn { color: var(--warn); }
+
+/* Comparativa */
+.cmp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.cmp-head p { margin: 0; font-size: 12px; color: var(--muted); max-width: 760px; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 4px; }
+.cmp td, .cmp th { white-space: nowrap; }
+.cmp td { font-size: 13px; }
+.cmp td.names { white-space: normal; min-width: 200px; max-width: 340px; }
+.cmp tbody tr:last-child td, .plain tbody tr:last-child td { border-bottom: 0; }
+.cmp tbody tr { cursor: pointer; }
+.cmp tbody tr:hover td { background: var(--head); }
+.cmp tr.sel td { background: var(--accent-soft); }
+.cmp tr.best td.names::after { content: "Mejor balance"; margin-left: 6px; font-size: 11px; color: var(--good); font-weight: 600; white-space: nowrap; }
+.cmp tr.best td:first-child { box-shadow: inset 3px 0 0 var(--good); }
+.cmp .bal { font-weight: 600; }
+.more { margin-top: 8px; }
+.plain td, .plain th { white-space: nowrap; font-size: 13px; }
+details > summary { cursor: pointer; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::before { content: "▸"; display: inline-block; width: 14px; transition: transform .15s; }
+details[open] > summary::before { transform: rotate(90deg); }
+details[open] > summary { margin-bottom: 10px; }
+.chg { font-size: 11px; margin-left: 4px; }
+footer { font-size: 11px; color: var(--faint); margin-top: 16px; line-height: 1.5; }
+footer p { margin: 0 0 4px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Simulador de hipoteca bonificada</h1>
+    <div class="hdr-actions">
+      <button class="btn" id="reset" type="button">Restablecer</button>
+      <button class="btn icon" id="theme" type="button" aria-label="Cambiar tema claro/oscuro" title="Cambiar tema claro/oscuro">
+        <svg id="icoSun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg id="icoMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="top">
+    <!-- Préstamo -->
+    <section class="card" id="cardPrestamo">
+      <h2>Préstamo</h2>
+      <div class="f2">
+        <div class="f">
+          <label for="importe">Importe</label>
+          <div class="inp"><input id="importe" type="text" inputmode="decimal" autocomplete="off"><span class="u">€</span></div>
+        </div>
+        <div class="f">
+          <label for="plazo">Plazo</label>
+          <div class="inp"><input id="plazo" type="text" inputmode="numeric" autocomplete="off"><span class="u">años</span></div>
+        </div>
+      </div>
+      <div class="f">
+        <span class="lbl">Modalidad</span>
+        <div class="seg" role="radiogroup" aria-label="Modalidad">
+          <label><input type="radio" name="modalidad" value="fijo">Fijo</label>
+          <label><input type="radio" name="modalidad" value="variable">Variable</label>
+          <label><input type="radio" name="modalidad" value="mixto">Mixto</label>
+        </div>
+      </div>
+
+      <div id="bFijo">
+        <div class="f">
+          <label for="tipoFijo">Tipo nominal anual, sin bonificar</label>
+          <div class="inp"><input id="tipoFijo" type="text" inputmode="decimal" autocomplete="off"><span class="u">%</span></div>
+        </div>
+      </div>
+
+      <div id="bMixto">
+        <div class="f2">
+          <div class="f">
+            <label for="aniosFijos">Años a tipo fijo</label>
+            <div class="inp"><input id="aniosFijos" type="text" inputmode="numeric" autocomplete="off"><span class="u">años</span></div>
+          </div>
+          <div class="f">
+            <label for="tipoMixto">Tipo fijo, sin bonif.</label>
+            <div class="inp"><input id="tipoMixto" type="text" inputmode="decimal" autocomplete="off"><span class="u">%</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="bVariable">
+        <div class="f2">
+          <div class="f">
+            <label for="euribor">Euríbor actual</label>
+            <div class="inp"><input id="euribor" type="text" inputmode="decimal" autocomplete="off"><span class="u">%</span></div>
+          </div>
+          <div class="f">
+            <label for="diferencial">Diferencial, sin bonif.</label>
+            <div class="inp"><input id="diferencial" type="text" inputmode="decimal" autocomplete="off"><span class="u">%</span></div>
+          </div>
+        </div>
+        <div id="bBonifTramos">
+          <span class="lbl hint">Aplicar bonificación en:</span>
+          <label class="chk"><input type="checkbox" id="bonifTramoFijo">Tramo fijo</label>
+          <label class="chk"><input type="checkbox" id="bonifTramoVar">Tramo variable (diferencial)</label>
+        </div>
+        <div class="divider"></div>
+        <div class="f">
+          <label for="escenario">Euríbor futuro</label>
+          <div class="inp"><select id="escenario">
+            <option value="constante">Constante</option>
+            <option value="lineal">Evolución gradual hasta un objetivo</option>
+            <option value="manual">Valor por año</option>
+          </select></div>
+        </div>
+        <div id="bLineal" class="f2">
+          <div class="f">
+            <label for="eurObjetivo">Euríbor objetivo</label>
+            <div class="inp"><input id="eurObjetivo" type="text" inputmode="decimal" autocomplete="off"><span class="u">%</span></div>
+          </div>
+          <div class="f">
+            <label for="eurAnios">Alcanzado en</label>
+            <div class="inp"><input id="eurAnios" type="text" inputmode="numeric" autocomplete="off"><span class="u">años</span></div>
+          </div>
+        </div>
+        <div id="bManual">
+          <div class="hint">Euríbor en cada revisión anual (%)</div>
+          <div class="eur-grid" id="eurGrid"></div>
+        </div>
+        <div class="hint" id="revHint" style="margin-top:8px">Revisión anual de la cuota.</div>
+      </div>
+      <div class="divider"></div>
+      <div class="f" style="margin-bottom:0">
+        <label for="comisionCuenta">Comisiones de cuenta</label>
+        <div class="inp"><input id="comisionCuenta" type="text" inputmode="decimal" autocomplete="off"><span class="u">€/año</span></div>
+      </div>
+    </section>
+
+    <!-- Bonificaciones -->
+    <section class="card" id="cardBonif">
+      <h2>Bonificaciones</h2>
+      <div class="toolbar">
+        <div class="f" style="flex:1 1 180px">
+          <label for="preset">Condiciones de banco</label>
+          <div class="inp"><select id="preset"></select></div>
+        </div>
+        <div class="f" style="width:120px">
+          <label for="tope">Tope máximo</label>
+          <div class="inp"><input id="tope" type="text" inputmode="decimal" autocomplete="off"><span class="u">p.p.</span></div>
+        </div>
+      </div>
+      <p class="src" id="presetSrc"></p>
+      <table class="ptable">
+        <thead><tr>
+          <th class="w-chk"></th><th class="l">Producto</th>
+          <th class="w-num">Bonificación<small>p.p.</small></th>
+          <th class="w-num">Coste<small>€/año</small></th>
+          <th class="w-del"></th>
+        </tr></thead>
+        <tbody id="prods"></tbody>
+        <tfoot><tr>
+          <td></td>
+          <td class="l"><button class="link" id="addProd" type="button">+ Añadir producto</button></td>
+          <td id="sumBonif"></td><td id="sumPrima"></td><td></td>
+        </tr></tfoot>
+      </table>
+      <div id="overTope"></div>
+      <p class="hint" style="margin:10px 0 0">Si un seguro lo contratarías de todos modos, pon como coste solo lo que pagas de más frente a la alternativa más barata.</p>
+    </section>
+
+    <!-- Resultado -->
+    <section class="card" id="cardRes" style="order:2">
+      <h2>Resultado</h2>
+      <div class="hero">
+        <div class="label" id="lblCuota">Cuota mensual</div>
+        <div class="big" id="rCuota">—</div>
+        <div class="sub" id="rCuotaSub"></div>
+      </div>
+      <div class="divider"></div>
+      <dl class="kv" id="rKv"></dl>
+      <div id="rNote"></div>
+    </section>
+  </div>
+
+  <!-- Comparativa -->
+  <section class="card block">
+    <h2>Comparativa de combinaciones</h2>
+    <div class="cmp-head">
+      <p id="cmpExplain"></p>
+      <div class="inp" style="width:auto"><span class="u">Ordenar por</span>
+        <select id="orden" style="padding-left:4px">
+          <option value="balance">Balance neto</option>
+          <option value="bonif">Bonificación</option>
+          <option value="cuota">Cuota</option>
+          <option value="coste">Coste de productos</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="cmp" id="cmpTable"></table></div>
+    <div class="more" id="cmpMore"></div>
+  </section>
+
+  <section class="card block" id="sensCard">
+    <details>
+      <summary>Sensibilidad al Euríbor</summary>
+      <p class="hint" id="sensHint" style="margin:0 0 8px"></p>
+      <div class="table-wrap"><table class="plain" id="sensTable"></table></div>
+    </details>
+  </section>
+
+  <section class="card block">
+    <details>
+      <summary id="amortTitle">Cuadro de amortización anual</summary>
+      <div class="table-wrap"><table class="plain" id="amortTable"></table></div>
+    </details>
+  </section>
+
+  <footer>
+    <p>Simulación orientativa: no incluye comisiones, gastos ni TAE. Cuota por sistema francés, cuota = P·i·(1+i)<sup>n</sup>/((1+i)<sup>n</sup>−1), con i = tipo anual/12 y n = años×12; en variable y mixto se recalcula en cada revisión anual sobre el capital pendiente.</p>
+    <p>Ahorro anual = diferencia media anual de intereses frente a no bonificar, a lo largo de toda la vida del préstamo. Balance neto = ahorro anual − coste anual de los productos (primas constantes). El tipo aplicado nunca baja del 0 %. Coste total = intereses + productos + comisiones de cuenta. Las comisiones de cuenta no cuentan en el balance porque se pagan en todas las combinaciones. Si financias una prima única, su capital se suma al préstamo y los intereses extra reducen el ahorro.</p>
+    <p>Las condiciones de cada banco proceden de su web, de comparadores o de información facilitada por el banco (octubre de 2026) y pueden haber cambiado; las primas, salvo las mínimas indicadas por el banco, son estimaciones. Confírmalas siempre en la FEIN.</p>
+  </footer>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  const LS_KEY = 'simHipotecaBonificada.v1';
+  const THEME_KEY = 'simHipTheme';
+  const MAX_PRODS = 12;
+  const ROWS_COLLAPSED = 12;
+
+  /* ---------- Presets de bancos ---------- */
+  // [nombre, bonificación p.p., coste anual €, requisito]
+  const PRESETS = {
+    santander: {
+      nombre: 'Santander', tope: 1.00,
+      fuente: 'Tabla de bonificaciones de Banco Santander. Costes = primas mínimas exigidas. Topes por familia: Protección 1,00 %, Ahorro 0,30 %. Primera revisión a los 6 meses, después cada 12.',
+      productos: [
+        ['Nómina + Bizum o tarjeta de crédito', 0.50, 0, 'Nómina > 1.000 €/mes; tarjeta con 6 movimientos/año'],
+        ['Seguro de protección de préstamos', 0.30, 300, 'Prima mínima 300 €/año'],
+        ['Seguro de hogar', 0.20, 300, 'Prima mínima 300 €/año'],
+        ['Vida no asociado, accidentes, IT, salud o auto', 0.10, 200, 'Prima mínima 200 €/año'],
+        ['Planes de pensiones, fondos, seguros de ahorro', 0.10, 0, 'Saldo mínimo 10.000 €']
+      ]
+    },
+    bbva: {
+      nombre: 'BBVA', tope: 1.00,
+      fuente: 'Dos bloques de 0,50. Referencia fija: 3,95 % sin bonificar / 2,95 % bonificado; variable: Euríbor + 1,60 % / + 0,60 %. Costes estimados.',
+      url: 'https://hipotify.es/analisis-de-hipotecas/bbva/',
+      productos: [
+        ['Ingresos domiciliados + seguro de hogar', 0.50, 250, 'Nómina ≥ 600 €/mes (pensión ≥ 300 €) y hogar del grupo'],
+        ['Seguro de amortización de préstamo', 0.50, 350, 'Debe cubrir al menos el 50 % del préstamo']
+      ]
+    },
+    caixabank: {
+      nombre: 'CaixaBank', tope: 1.00,
+      fuente: 'Condiciones de la web oficial de CaixaBank (21/10/2026). El cumplimiento se comprueba cada mes y el tipo puede subir o bajar. Vida y salud son excluyentes entre sí. Costes estimados.',
+      productos: [
+        ['Nómina + 3 recibos + compras con tarjeta', 0.35, 0, 'Ingresos > 600 €/mes en los últimos 6 meses; al menos 3 compras con tarjeta en los últimos 3 meses'],
+        ['Seguro de hogar', 0.15, 250, ''],
+        ['Seguro de vida (≥ 95 % del préstamo)', 0.35, 350, 'MyBox Vida, Vida Familiar o SEVIAM', 'vida'],
+        ['Seguro de vida (50–95 % del préstamo)', 0.20, 250, 'Por debajo del 50 % no bonifica', 'vida'],
+        ['Seguro de salud', 0.20, 600, 'Salvo Adeslas Dental y Adeslas Básico', 'vida'],
+        ['Alarma Hogar Verisure', 0.15, 480, 'Cuota de alarma ≈ 40 €/mes']
+      ]
+    },
+    sabadell: {
+      nombre: 'Sabadell', tope: 0.30,
+      fuente: 'Condiciones informadas por el banco (oct. 2026): unos 0,30 p.p. de diferencia entre el tipo con hogar, vida y nómina y el tipo sin ellos, sin desglose por producto. El reparto de 0,10 por producto es un supuesto. Costes estimados.',
+      productos: [
+        ['Nómina', 0.10, 0, 'Reparto supuesto'],
+        ['Seguro de hogar', 0.10, 250, 'Reparto supuesto'],
+        ['Seguro de vida', 0.10, 350, 'Reparto supuesto']
+      ]
+    },
+    bankinter: {
+      nombre: 'Bankinter', tope: 1.30,
+      fuente: 'Hipoteca fija: 4,80 % sin bonificar / 3,50 % bonificado (30 años). Costes estimados.',
+      url: 'https://www.economiaresponsablefinanzas.com/hipotecas/hipotecas-fijas/hipoteca-fija-bankinter/',
+      productos: [
+        ['Cuenta Nómina, Profesional o No-Nómina', 0.30, 0, ''],
+        ['Seguro de vida (100 % del préstamo)', 0.60, 400, ''],
+        ['Seguro multirriesgo hogar', 0.30, 250, ''],
+        ['Plan de pensiones / EPSV', 0.10, 0, 'Requiere aportaciones periódicas']
+      ]
+    },
+    ing: {
+      nombre: 'ING', tope: 0.50,
+      fuente: 'Hipoteca Naranja. Mixta 10 años: 4,20 % / E + 1,64 % sin bonificar; 3,70 % / E + 1,14 % bonificada. Costes estimados.',
+      url: 'https://www.helpmycash.com/hipotecas/ing/hipoteca-naranja-mixta',
+      productos: [
+        ['Nómina o saldo + seguro de hogar', 0.10, 250, 'Nómina ≥ 600 €/mes o saldo diario ≥ 2.000 €'],
+        ['Seguro de vida', 0.40, 350, '']
+      ]
+    },
+    kutxabank: {
+      nombre: 'Kutxabank', tope: 1.10,
+      fuente: 'Condiciones informadas por el banco para la hipoteca PH Joven (oct. 2026). La bonificación por edad dura hasta los 35 años, pero el simulador la aplica a todo el plazo. Revisión anual de bonificaciones. Costes estimados.',
+      productos: [
+        ['Nómina + tarjetas', 0.60, 0, 'Domiciliar la nómina; consumo con tarjetas ≈ 1.200 €/año'],
+        ['Seguro de hogar', 0.10, 300, 'Prima única ≈ 1.500 € cada 5 años', '', 1500],
+        ['Seguro de vida', 0.10, 350, ''],
+        ['Fondos o planes de pensiones', 0.20, 0, 'Aportación ≥ 2.400 €/año (mín. 200 €/mes); el dinero queda en el fondo'],
+        ['Menor de 35 años', 0.10, 0, 'Solo hasta cumplir 35']
+      ]
+    },
+    ibercaja: {
+      nombre: 'Ibercaja', tope: 1.00,
+      fuente: 'Hipoteca Fija Vamos: 3,55 % sin bonificar / 2,55 % bonificado, en un único paquete (web de Ibercaja, válida hasta el 31/10/2026). Coste estimado (hogar + vida).',
+      url: 'https://www.ibercaja.es/particulares/hipotecas-prestamos/hipotecas/hipoteca-vamos-fija/',
+      productos: [
+        ['Paquete: nómina, tarjeta, recibos, hogar, vida y fondo', 1.00, 600, 'Nómina ≥ 2.500 €/mes; tarjeta ≥ 12 operaciones/semestre; ≥ 3 recibos; aportación ≥ 75 €/mes a fondo Ibercaja']
+      ]
+    },
+    unicaja: {
+      nombre: 'Unicaja', tope: 1.00,
+      fuente: 'Hipoteca fija: 4,20 % sin bonificar / 3,20 % bonificado, en un único paquete. Otros comparadores dan desgloses por producto distintos. Coste estimado (hogar + vida).',
+      url: 'https://www.helpmycash.com/hipotecas/unicaja/hipoteca-fija-unicaja/',
+      productos: [
+        ['Paquete: nómina, tarjeta, hogar, vida y plan de pensiones', 1.00, 600, 'Nómina ≥ 2.000 € netos/mes; tarjeta ≥ 600 €/semestre; aportación al plan ≥ 0,6 % del capital pendiente/año']
+      ]
+    },
+    abanca: {
+      nombre: 'ABANCA', tope: 0.70, comisionCuenta: 160,
+      fuente: 'Condiciones informadas por el banco para la Hipoteca Mari Carmen Fija (oct. 2026). Cuenta obligatoria: 40 €/trimestre, salvo cuenta clara. Costes estimados.',
+      productos: [
+        ['Nómina o seguros sociales', 0.25, 0, 'Nómina de 800 a 2.500 €/mes'],
+        ['Seguro de hogar', 0.20, 400, ''],
+        ['Seguro de vida (prima única)', 0.25, 380, 'Prima única ≈ 3.800 € para 10 años']
+      ]
+    }
+  };
+
+  const defaultProductos = () => [
+    { nombre: 'Nómina domiciliada', bonif: 0.50, prima: 0, activo: true, nota: '' },
+    { nombre: 'Seguro de hogar', bonif: 0.20, prima: 250, activo: true, nota: '' },
+    { nombre: 'Seguro de vida', bonif: 0.10, prima: 300, activo: true, nota: '' },
+    { nombre: 'Seguro de coche', bonif: 0.10, prima: 450, activo: false, nota: '' }
+  ];
+
+  const defaults = () => ({
+    importe: 200000, plazo: 30, modalidad: 'fijo', tipoFijo: 3.0,
+    tipoMixto: 2.6, aniosFijos: 10, bonifTramoFijo: true, bonifTramoVar: true,
+    euribor: 2.2, diferencial: 1.0, escenario: 'constante', eurObjetivo: 3.0, eurAnios: 5, eurManual: [],
+    tope: 1.0, comisionCuenta: 0, orden: 'balance', preset: 'custom', custom: null,
+    productos: defaultProductos()
+  });
+
+  let nextId = 1;
+  function withIds(list) { return list.map(p => Object.assign({ nota: '' }, p, { id: nextId++ })); }
+
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(LS_KEY));
+      if (s && Array.isArray(s.productos)) return Object.assign(defaults(), s);
+    } catch (e) { /* sin almacenamiento */ }
+    return defaults();
+  }
+  function save() {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* sin almacenamiento */ }
+  }
+
+  let state = load();
+  state.productos = withIds(state.productos);
+  let verTodas = false;
+
+  /* ---------- Formato español ---------- */
+  function fmtNum(x, dec = 2, minus = '−') {
+    if (!Number.isFinite(x)) return '—';
+    const abs = Math.abs(x).toFixed(dec);
+    const neg = x < 0 && Number(abs) !== 0;
+    let [ent, decs] = abs.split('.');
+    ent = ent.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return (neg ? minus : '') + ent + (dec > 0 ? ',' + decs : '');
+  }
+  const eur = (x, dec = 2) => fmtNum(x, dec) + ' €';
+  const pct = (x, dec = 2) => fmtNum(x, dec) + ' %';
+  function signed(x, f) {
+    const s = f(x);
+    return (x > 0 && /[1-9]/.test(s)) ? '+' + s : s;
+  }
+  const rateDec = v => Math.round(Math.abs(v) * 1000) % 10 !== 0 ? 3 : 2;
+  const pctR = v => pct(v, rateDec(v));
+  function fmtInput(v, kind) {
+    if (kind === 'auto') return fmtNum(v, Number.isInteger(v) ? 0 : 2, '-');
+    if (kind === 'rate') return fmtNum(v, rateDec(v), '-');
+    return fmtNum(v, kind, '-');
+  }
+  function parseNum(s) {
+    s = String(s).trim().replace(/[€%\s]/g, '').replace(/[−–]/g, '-');
+    if (!s) return NaN;
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    if (!/^-?(\d+\.?\d*|\.\d+)$/.test(s)) return NaN;
+    return parseFloat(s);
+  }
+  const escHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const $ = s => document.querySelector(s);
+  const cls = (v, eps = 0.005) => v > eps ? 'good' : (v < -eps ? 'bad' : '');
+
+  /* ---------- Cálculo ---------- */
+  function cuotaFrancesa(P, i, n) {
+    if (n <= 0) return 0;
+    if (Math.abs(i) < 1e-12) return P / n;
+    const f = Math.pow(1 + i, n);
+    return P * i * f / (f - 1);
+  }
+
+  // tasaAnio(y): tipo nominal anual (%) del año y (0-indexado). La cuota se recalcula cada año.
+  function simular(P, anios, tasaAnio) {
+    const n = anios * 12;
+    let saldo = P, total = 0, intereses = 0, cuotaMin = Infinity, cuotaMax = 0, limitado = false;
+    const filas = [];
+    for (let y = 0; y < anios; y++) {
+      const bruto = tasaAnio(y);
+      const r = Math.max(0, bruto);
+      if (bruto < 0) limitado = true;
+      const i = r / 100 / 12;
+      const cuota = cuotaFrancesa(saldo, i, n - y * 12);
+      let intY = 0, amY = 0;
+      for (let m = 0; m < 12; m++) {
+        const int = saldo * i;
+        let am = cuota - int;
+        if (am > saldo) am = saldo;
+        saldo -= am; intY += int; amY += am;
+      }
+      cuotaMin = Math.min(cuotaMin, cuota); cuotaMax = Math.max(cuotaMax, cuota);
+      total += intY + amY; intereses += intY;
+      filas.push({ anio: y + 1, tipo: r, cuota, intereses: intY, amortizado: amY, pendiente: Math.max(0, saldo) });
+    }
+    return { cuotaInicial: filas.length ? filas[0].cuota : 0, total, intereses, filas, cuotaMin, cuotaMax, limitado };
+  }
+
+  function euriborPath(esc = state.escenario) {
+    const A = state.plazo, e0 = state.euribor, p = [];
+    for (let y = 0; y < A; y++) {
+      if (y === 0 || esc === 'constante') p.push(e0);
+      else if (esc === 'lineal') {
+        const t = Math.max(1, state.eurAnios);
+        p.push(y >= t ? state.eurObjetivo : e0 + (state.eurObjetivo - e0) * y / t);
+      } else {
+        const v = state.eurManual[y];
+        p.push(Number.isFinite(v) ? v : p[y - 1]);
+      }
+    }
+    return p;
+  }
+
+  // Primer año con tipo variable (0-indexado), o null si no hay tramo variable.
+  function inicioVariable() {
+    if (state.modalidad === 'variable') return state.plazo > 1 ? 1 : null;
+    if (state.modalidad === 'mixto') return state.aniosFijos < state.plazo ? state.aniosFijos : null;
+    return null;
+  }
+
+  function tasaPara(b, path) {
+    const m = state.modalidad;
+    if (m === 'fijo') return () => state.tipoFijo - b;
+    if (m === 'variable') return y => path[y] + state.diferencial - b;
+    const F = state.aniosFijos;
+    const bF = state.bonifTramoFijo ? b : 0, bV = state.bonifTramoVar ? b : 0;
+    return y => y < F ? state.tipoMixto - bF : path[y] + state.diferencial - bV;
+  }
+
+  /* ---------- Inputs numéricos ---------- */
+  const numFields = [
+    { id: 'importe', kind: 'auto', min: 1, max: 1e9 },
+    { id: 'plazo', kind: 0, min: 1, max: 50, int: true },
+    { id: 'tipoFijo', kind: 'rate', min: 0, max: 30 },
+    { id: 'tipoMixto', kind: 'rate', min: 0, max: 30 },
+    { id: 'aniosFijos', kind: 0, min: 1, max: 50, int: true },
+    { id: 'euribor', kind: 'rate', min: -5, max: 25 },
+    { id: 'diferencial', kind: 'rate', min: 0, max: 25 },
+    { id: 'eurObjetivo', kind: 'rate', min: -5, max: 25 },
+    { id: 'eurAnios', kind: 0, min: 1, max: 50, int: true },
+    { id: 'tope', kind: 'rate', min: 0, max: 20 },
+    { id: 'comisionCuenta', kind: 'auto', min: 0, max: 1e5 }
+  ];
+  const validNum = (v, f) => Number.isFinite(v) && v >= f.min && v <= f.max && (!f.int || Number.isInteger(v));
+
+  function fillInputs() {
+    numFields.forEach(f => {
+      const el = $('#' + f.id);
+      el.value = fmtInput(state[f.id], f.kind);
+      el.closest('.inp').classList.remove('invalid');
+    });
+    document.querySelectorAll('input[name=modalidad]').forEach(r => { r.checked = r.value === state.modalidad; });
+    $('#escenario').value = state.escenario;
+    $('#orden').value = state.orden;
+    $('#bonifTramoFijo').checked = state.bonifTramoFijo;
+    $('#bonifTramoVar').checked = state.bonifTramoVar;
+  }
+
+  numFields.forEach(f => {
+    const el = $('#' + f.id);
+    el.addEventListener('input', () => {
+      const v = parseNum(el.value);
+      const ok = validNum(v, f);
+      el.closest('.inp').classList.toggle('invalid', !ok);
+      if (!ok) return;
+      state[f.id] = v;
+      if (f.id === 'tope') markCustom();
+      if (f.id === 'plazo' || f.id === 'aniosFijos') renderManual();
+      if (f.id === 'aniosFijos') updateModeUI();
+      recalc();
+    });
+    el.addEventListener('blur', () => {
+      if (!el.closest('.inp').classList.contains('invalid')) el.value = fmtInput(state[f.id], f.kind);
+    });
+  });
+
+  document.querySelectorAll('input[name=modalidad]').forEach(r => r.addEventListener('change', () => {
+    state.modalidad = r.value; renderManual(); updateModeUI(); recalc();
+  }));
+  ['bonifTramoFijo', 'bonifTramoVar'].forEach(id => $('#' + id).addEventListener('change', e => {
+    state[id] = e.target.checked; recalc();
+  }));
+  $('#escenario').addEventListener('change', e => {
+    const nuevo = e.target.value;
+    if (nuevo === 'manual') state.eurManual = euriborPath(state.escenario);
+    state.escenario = nuevo;
+    renderManual(); updateModeUI(); recalc();
+  });
+  $('#orden').addEventListener('change', e => { state.orden = e.target.value; recalc(); });
+  $('#reset').addEventListener('click', () => {
+    state = defaults(); state.productos = withIds(state.productos); verTodas = false;
+    fillInputs(); renderPresetSelect(); renderProductos(); renderManual(); updateModeUI(); recalc();
+  });
+
+  function updateModeUI() {
+    const m = state.modalidad;
+    $('#bFijo').hidden = m !== 'fijo';
+    $('#bMixto').hidden = m !== 'mixto';
+    $('#bVariable').hidden = m === 'fijo';
+    $('#bBonifTramos').hidden = m !== 'mixto';
+    $('#bLineal').hidden = state.escenario !== 'lineal';
+    $('#bManual').hidden = state.escenario !== 'manual';
+    $('#sensCard').hidden = m === 'fijo';
+    $('#revHint').textContent = m === 'mixto'
+      ? `Tipo fijo los ${state.aniosFijos} primeros años; después Euríbor + diferencial con revisión anual.`
+      : 'Revisión anual: la cuota se recalcula con el Euríbor vigente sobre el capital pendiente.';
+  }
+
+  /* ---------- Euríbor por año ---------- */
+  function renderManual() {
+    const grid = $('#eurGrid');
+    if (state.escenario !== 'manual' || state.modalidad === 'fijo') { grid.innerHTML = ''; return; }
+    const A = state.plazo, m = state.eurManual;
+    for (let y = 1; y < A; y++) if (!Number.isFinite(m[y])) m[y] = Number.isFinite(m[y - 1]) ? m[y - 1] : state.euribor;
+    const desde = Math.max(1, inicioVariable() ?? A);
+    let html = '';
+    for (let y = desde; y < A; y++) {
+      html += `<label>Año ${y + 1}<input type="text" inputmode="decimal" data-y="${y}" value="${fmtInput(m[y], 'rate')}"></label>`;
+    }
+    grid.innerHTML = html || '<span class="hint">No hay revisiones con este plazo.</span>';
+  }
+  $('#eurGrid').addEventListener('input', e => {
+    const y = Number(e.target.dataset.y);
+    if (!y) return;
+    const v = parseNum(e.target.value);
+    const ok = Number.isFinite(v) && v >= -5 && v <= 25;
+    e.target.classList.toggle('invalid', !ok);
+    if (ok) { state.eurManual[y] = v; recalc(); }
+  });
+  $('#eurGrid').addEventListener('focusout', e => {
+    const y = Number(e.target.dataset.y);
+    if (y && !e.target.classList.contains('invalid')) e.target.value = fmtInput(state.eurManual[y], 'rate');
+  });
+
+  /* ---------- Presets ---------- */
+  function renderPresetSelect() {
+    const sel = $('#preset');
+    sel.innerHTML = '<option value="custom">Personalizado</option>' +
+      Object.entries(PRESETS).map(([k, p]) => `<option value="${k}">${p.nombre}</option>`).join('');
+    sel.value = state.preset;
+    renderPresetSrc();
+  }
+  function renderPresetSrc() {
+    const p = PRESETS[state.preset];
+    $('#presetSrc').innerHTML = p
+      ? escHtml(p.fuente) + (p.url ? ` <a href="${p.url}" target="_blank" rel="noopener">Fuente</a>` : '')
+      : 'Productos y valores propios. Elige un banco para cargar sus condiciones publicadas.';
+  }
+  $('#preset').addEventListener('change', e => {
+    const k = e.target.value;
+    if (state.preset === 'custom') {
+      state.custom = { tope: state.tope, comisionCuenta: state.comisionCuenta, productos: state.productos.map(({ id, ...p }) => p) };
+    }
+    if (k === 'custom') {
+      const c = state.custom || { tope: 1.0, productos: defaultProductos() };
+      state.tope = c.tope; state.comisionCuenta = c.comisionCuenta || 0; state.productos = withIds(c.productos);
+      $('#comisionCuenta').value = fmtInput(state.comisionCuenta, 'auto');
+    } else {
+      const p = PRESETS[k];
+      state.tope = p.tope;
+      // Dentro de un grupo de productos excluyentes solo se activa el primero.
+      const grupos = new Set();
+      state.comisionCuenta = p.comisionCuenta || 0;
+      state.productos = withIds(p.productos.map(([nombre, bonif, prima, nota, grupo = '', primaUnica = 0]) => {
+        const activo = !grupo || !grupos.has(grupo);
+        if (grupo) grupos.add(grupo);
+        return { nombre, bonif, prima, nota, grupo, primaUnica, financiar: false, activo };
+      }));
+      $('#comisionCuenta').value = fmtInput(state.comisionCuenta, 'auto');
+    }
+    state.preset = k; verTodas = false;
+    $('#tope').value = fmtInput(state.tope, 'rate');
+    $('#tope').closest('.inp').classList.remove('invalid');
+    renderPresetSrc(); renderProductos(); recalc();
+  });
+  // Cualquier edición convierte las condiciones en personalizadas.
+  function markCustom() {
+    if (state.preset === 'custom') return;
+    state.preset = 'custom'; state.custom = null;
+    $('#preset').value = 'custom'; renderPresetSrc();
+  }
+
+  /* ---------- Productos ---------- */
+  function notaDe(p) {
+    const otros = p.grupo ? state.productos.filter(q => q !== p && q.grupo === p.grupo).map(q => q.nombre) : [];
+    return [p.nota, otros.length ? `Excluyente con: ${otros.join(', ')}` : ''].filter(Boolean).join('. ');
+  }
+  function renderProductos() {
+    $('#prods').innerHTML = state.productos.map(p => `
+      <tr data-id="${p.id}"${p.activo ? '' : ' class="off"'}>
+        <td class="w-chk"><input type="checkbox" data-f="activo"${p.activo ? ' checked' : ''} aria-label="Incluir ${escHtml(p.nombre)}"></td>
+        <td class="l"><input class="pname" type="text" data-f="nombre" value="${escHtml(p.nombre)}" aria-label="Nombre del producto">${notaDe(p) ? `<div class="pnote">${escHtml(notaDe(p))}</div>` : ''}${p.primaUnica > 0
+          ? `<label class="chk pnote"><input type="checkbox" data-f="financiar"${p.financiar ? ' checked' : ''}>Financiar la prima única (${eur(p.primaUnica)}) en el préstamo</label>` : ''}</td>
+        <td><input class="cell-inp" type="text" inputmode="decimal" data-f="bonif" value="${fmtInput(p.bonif, 'rate')}" aria-label="Bonificación"></td>
+        <td><input class="cell-inp" type="text" inputmode="decimal" data-f="prima" value="${fmtInput(p.prima, 'auto')}" aria-label="Coste anual"></td>
+        <td class="w-del"><button class="del" type="button" data-act="del" title="Eliminar" aria-label="Eliminar producto">×</button></td>
+      </tr>`).join('') || '<tr><td colspan="5" class="l hint">Sin productos.</td></tr>';
+    $('#addProd').disabled = state.productos.length >= MAX_PRODS;
+  }
+  const prodOf = el => {
+    const row = el.closest('tr[data-id]');
+    return row ? [row, state.productos.find(p => String(p.id) === row.dataset.id)] : [null, null];
+  };
+  $('#prods').addEventListener('change', e => {
+    const [row, p] = prodOf(e.target);
+    if (!p) return;
+    if (e.target.dataset.f === 'financiar') { p.financiar = e.target.checked; recalc(); return; }
+    if (e.target.dataset.f !== 'activo') return;
+    p.activo = e.target.checked;
+    if (p.activo && p.grupo) {
+      state.productos.forEach(q => { if (q !== p && q.grupo === p.grupo) q.activo = false; });
+      renderProductos();
+    } else row.classList.toggle('off', !p.activo);
+    recalc();
+  });
+  $('#prods').addEventListener('input', e => {
+    const f = e.target.dataset.f;
+    if (!f || f === 'activo') return;
+    const [, p] = prodOf(e.target);
+    if (!p) return;
+    if (f === 'nombre') { p.nombre = e.target.value; markCustom(); recalc(); return; }
+    const v = parseNum(e.target.value);
+    const ok = Number.isFinite(v) && v >= 0 && v <= (f === 'bonif' ? 20 : 1e7);
+    e.target.classList.toggle('invalid', !ok);
+    if (ok) { p[f] = v; markCustom(); recalc(); }
+  });
+  $('#prods').addEventListener('focusout', e => {
+    const f = e.target.dataset.f;
+    if (f !== 'bonif' && f !== 'prima') return;
+    const [, p] = prodOf(e.target);
+    if (p && !e.target.classList.contains('invalid')) e.target.value = fmtInput(p[f], f === 'bonif' ? 'rate' : 'auto');
+  });
+  $('#prods').addEventListener('click', e => {
+    if (e.target.dataset.act !== 'del') return;
+    const [, p] = prodOf(e.target);
+    state.productos = state.productos.filter(q => q !== p);
+    markCustom(); renderProductos(); recalc();
+  });
+  $('#addProd').addEventListener('click', () => {
+    if (state.productos.length >= MAX_PRODS) return;
+    state.productos.push(...withIds([{ nombre: 'Nuevo producto', bonif: 0.10, prima: 0, activo: true }]));
+    markCustom(); renderProductos(); recalc();
+    const inputs = document.querySelectorAll('#prods .pname');
+    const last = inputs[inputs.length - 1];
+    if (last) { last.focus(); last.select(); }
+  });
+
+  /* ---------- Recalcular ---------- */
+  function recalc() {
+    const P = state.importe, A = state.plazo;
+    const path = euriborPath();
+    const cache = new Map();
+    const sim = (b, cap) => {
+      const key = b.toFixed(8) + '|' + cap.toFixed(2);
+      let s = cache.get(key);
+      if (!s) { s = simular(cap, A, tasaPara(b, path)); cache.set(key, s); }
+      return s;
+    };
+
+    const prods = state.productos, k = prods.length;
+    const combos = [];
+    combo: for (let mask = 0; mask < (1 << k); mask++) {
+      let sb = 0, prima = 0, fin = 0; const nombres = [], grupos = new Set();
+      for (let j = 0; j < k; j++) if (mask & (1 << j)) {
+        const g = prods[j].grupo;
+        if (g) { if (grupos.has(g)) continue combo; grupos.add(g); }
+        sb += prods[j].bonif; prima += prods[j].prima; nombres.push(prods[j].nombre || `Producto ${j + 1}`);
+        if (prods[j].financiar && prods[j].primaUnica > 0) fin += prods[j].primaUnica;
+      }
+      const b = Math.min(sb, state.tope);
+      combos.push({ mask, n: nombres.length, sb, b, prima, fin, nombres, s: sim(b, P + fin) });
+    }
+    const selMask = prods.reduce((m, p, j) => p.activo ? (m | (1 << j)) : m, 0);
+    const base = combos[0];
+    const sel = combos.find(c => c.mask === selMask) || base;
+    const max = combos.reduce((a, c) => (c.b > a.b + 1e-9 || (Math.abs(c.b - a.b) <= 1e-9 && c.prima < a.prima)) ? c : a);
+    combos.forEach(c => {
+      c.ahorroTotal = base.s.intereses - c.s.intereses;
+      c.ahorroAnual = c.ahorroTotal / A;
+      c.balanceAnual = c.ahorroAnual - c.prima;
+      c.balanceTotal = c.ahorroTotal - c.prima * A;
+      c.difMes = c.s.cuotaInicial - max.s.cuotaInicial;
+      c.difAnio = (c.s.total - max.s.total) / A;
+    });
+    const best = combos.reduce((a, c) =>
+      (c.balanceAnual > a.balanceAnual + 1e-6 ||
+        (Math.abs(c.balanceAnual - a.balanceAnual) <= 1e-6 && (c.prima < a.prima || (c.prima === a.prima && c.n < a.n)))) ? c : a);
+
+    const ctx = { P, A, path, base, max, sel, best, combos, iv: inicioVariable() };
+    renderBonifSum(ctx);
+    renderResultados(ctx);
+    renderSens(ctx);
+    renderTabla(ctx);
+    renderAmort(ctx);
+    save();
+  }
+
+  const tipoAnio = (ctx, b, y = 0) => Math.max(0, tasaPara(b, ctx.path)(y));
+
+  function renderBonifSum(ctx) {
+    const { sb, b, prima } = ctx.sel;
+    const over = sb > state.tope + 1e-9;
+    $('#sumBonif').innerHTML = `<strong>${fmtNum(b)}</strong>`;
+    $('#sumPrima').innerHTML = `<strong>${fmtNum(prima, 0)}</strong>`;
+    $('#overTope').innerHTML = over
+      ? `<p class="over" style="margin:6px 0 0">Los productos marcados suman ${pct(sb)}, pero el tope es ${pct(state.tope)}: el exceso no reduce el tipo.</p>`
+      : '';
+  }
+
+  function renderResultados(ctx) {
+    const { sel, base, A, iv } = ctx;
+    const s = sel.s, m = state.modalidad;
+    const F = state.aniosFijos;
+
+    if (m === 'fijo') $('#lblCuota').textContent = 'Cuota mensual';
+    else if (m === 'variable') $('#lblCuota').textContent = 'Cuota mensual, primer año';
+    else $('#lblCuota').textContent = iv !== null ? `Cuota mensual, años 1–${F}` : 'Cuota mensual';
+    $('#rCuota').textContent = eur(s.cuotaInicial);
+
+    const ahorroMes = base.s.cuotaInicial - s.cuotaInicial;
+    let sub = sel.b > 0 && ahorroMes > 0.005
+      ? `${eur(ahorroMes)} menos que sin bonificar (${eur(base.s.cuotaInicial)})`
+      : `Sin bonificar: ${eur(base.s.cuotaInicial)}`;
+    if (iv !== null) {
+      const c = s.filas[iv].cuota;
+      sub += m === 'mixto'
+        ? `<br>Desde el año ${iv + 1}: ${eur(c)} con Euríbor ${pctR(ctx.path[iv])}`
+        : `<br>Tras revisiones: entre ${eur(s.cuotaMin)} y ${eur(s.cuotaMax)}`;
+    }
+    $('#rCuotaSub').innerHTML = sub;
+
+    let tipoTxt;
+    const bV = m === 'mixto' && !state.bonifTramoVar ? 0 : sel.b;
+    const difB = state.diferencial - bV;
+    if (m === 'fijo') tipoTxt = pct(tipoAnio(ctx, sel.b));
+    else if (m === 'variable') tipoTxt = `E + ${pct(difB)} <span class="hint">(${pct(tipoAnio(ctx, sel.b))} año 1)</span>`;
+    else tipoTxt = iv !== null ? `${pct(tipoAnio(ctx, sel.b))}, luego E + ${pct(difB)}` : pct(tipoAnio(ctx, sel.b));
+
+    const rows = [
+      ['Bonificación aplicada', pct(sel.b)],
+      ['Tipo aplicado', tipoTxt],
+      null,
+      ['Total pagado', eur(s.total)],
+      ['Intereses', eur(s.intereses)],
+      [`Coste productos (${A} años)`, eur(sel.prima * A)],
+      ...(state.comisionCuenta > 0 ? [[`Comisiones de cuenta (${A} años)`, eur(state.comisionCuenta * A)]] : []),
+      ['<span class="b">Coste total</span>', `<span class="b">${eur(s.intereses + (sel.prima + state.comisionCuenta) * A)}</span>`],
+      ...(sel.fin > 0 ? [['Prima financiada en el préstamo', eur(sel.fin)]] : []),
+      null,
+      ['Ahorro en intereses', `${eur(sel.ahorroAnual)}/año`],
+      ['Coste de productos', `${eur(sel.prima)}/año`],
+      ['<span class="b">Balance neto</span>', `<span class="b ${cls(sel.balanceAnual)}">${signed(sel.balanceAnual, eur)}/año</span>`],
+      ['Balance en la vida del préstamo', `<span class="${cls(sel.balanceTotal, 0.5)}">${signed(sel.balanceTotal, v => eur(v, 0))}</span>`]
+    ];
+    $('#rKv').innerHTML = rows.map(r => r ? `<dt>${r[0]}</dt><dd>${r[1]}</dd>` : '<div class="sep"></div>').join('');
+
+    let note;
+    if (sel.mask === ctx.best.mask) note = '<div class="callout">Tu selección es la combinación con mejor balance neto.</div>';
+    else {
+      const d = ctx.best.balanceAnual - sel.balanceAnual;
+      note = `<div class="callout">Mejor balance: <strong>${escHtml(ctx.best.nombres.join(', ') || 'ningún producto')}</strong>, ${eur(d)}/año más que tu selección.</div>`;
+    }
+    if (s.limitado) note += '<div class="callout warn">En algún año el tipo resultante sería negativo; se aplica un 0 %.</div>';
+    $('#rNote').innerHTML = note;
+  }
+
+  function renderSens(ctx) {
+    if (state.modalidad === 'fijo') return;
+    const { P, A, sel, iv, path } = ctx;
+    if (iv === null) {
+      $('#sensHint').textContent = 'Con este plazo no hay tramo variable.';
+      $('#sensTable').innerHTML = '';
+      return;
+    }
+    $('#sensHint').textContent = `Con tu selección, si a partir del año ${iv + 1} el Euríbor se quedara fijo en cada valor.`;
+    const valores = [...new Set([0, 1, 2, 3, 4, 5, state.euribor].map(v => Math.round(v * 1000) / 1000))].sort((a, b) => a - b);
+    const ref = sel.s.filas[iv - 1].cuota;
+    let html = `<thead><tr><th class="l">Euríbor</th><th>Tipo aplicado</th><th>Cuota desde año ${iv + 1}<small>€/mes</small></th>` +
+      `<th>Variación<small>vs. año ${iv}</small></th><th>Intereses totales<small>€</small></th><th>Total pagado<small>€</small></th></tr></thead><tbody>`;
+    valores.forEach(e => {
+      const p2 = path.map((v, y) => y < iv ? v : e);
+      const s = simular(P + sel.fin, A, tasaPara(sel.b, p2));
+      const c = s.filas[iv].cuota, d = c - ref;
+      const actual = Math.abs(e - state.euribor) < 1e-9;
+      html += `<tr><td class="l">${pctR(e)}${actual ? ' <span class="hint">(actual)</span>' : ''}</td>` +
+        `<td>${pct(s.filas[iv].tipo)}</td><td>${fmtNum(c)}</td>` +
+        `<td class="${cls(-d)}">${signed(d, fmtNum)}</td><td>${fmtNum(s.intereses, 0)}</td><td>${fmtNum(s.total, 0)}</td></tr>`;
+    });
+    $('#sensTable').innerHTML = html + '</tbody>';
+  }
+
+  function renderTabla(ctx) {
+    const { combos, sel, best, max } = ctx;
+    const m = state.modalidad;
+    const cmp = {
+      balance: (a, b) => b.balanceAnual - a.balanceAnual || a.prima - b.prima || a.n - b.n,
+      bonif: (a, b) => b.b - a.b || a.prima - b.prima || a.n - b.n,
+      cuota: (a, b) => a.s.cuotaInicial - b.s.cuotaInicial || a.prima - b.prima || a.n - b.n,
+      coste: (a, b) => a.prima - b.prima || b.b - a.b || a.n - b.n
+    }[state.orden];
+    const sorted = combos.slice().sort(cmp);
+
+    const año1 = m === 'fijo' ? '' : ' (año 1)';
+    $('#cmpExplain').innerHTML =
+      `Cada fila es una combinación de productos; marca una para aplicarla. <strong>Balance neto</strong> = lo que ahorras en intereses al año gracias a la bonificación − lo que cuestan los productos al año. ` +
+      `Las diferencias de cuota se comparan con la combinación de máxima bonificación (${pct(max.b)}).` +
+      (m === 'fijo' ? '' : ' La cuota es la del primer año; los importes anuales son la media de toda la vida del préstamo.');
+
+    let html = `<thead><tr><th class="l" style="width:28px"></th><th class="l">Productos</th>` +
+      `<th>Bonif.<small>p.p.</small></th><th>Tipo${año1}<small>%</small></th><th>Cuota${año1}<small>€/mes</small></th>` +
+      `<th>vs. máx. bonif.<small>€/mes</small></th><th>vs. máx. bonif.<small>€/año</small></th>` +
+      `<th>Ahorro<small>€/año</small></th><th>Coste productos<small>€/año</small></th><th>Balance neto<small>€/año</small></th></tr></thead><tbody>`;
+    const visibles = verTodas ? sorted : sorted.slice(0, ROWS_COLLAPSED);
+    if (!verTodas && !visibles.includes(sel)) visibles.push(sel);
+    visibles.forEach(c => {
+      const isSel = c.mask === sel.mask, isBest = c.mask === best.mask;
+      html += `<tr data-mask="${c.mask}" class="${isSel ? 'sel' : ''}${isBest ? ' best' : ''}">` +
+        `<td class="l"><input type="checkbox" data-mask="${c.mask}"${isSel ? ' checked' : ''} aria-label="Aplicar esta combinación"></td>` +
+        `<td class="l names">${escHtml(c.nombres.join(', ') || 'Ninguno')}</td>` +
+        `<td>${fmtNum(c.b)}</td>` +
+        `<td>${fmtNum(tipoAnio(ctx, c.b))}</td>` +
+        `<td>${fmtNum(c.s.cuotaInicial)}</td>` +
+        `<td>${signed(c.difMes, fmtNum)}</td>` +
+        `<td>${signed(c.difAnio, v => fmtNum(v, 0))}</td>` +
+        `<td>${fmtNum(c.ahorroAnual, 0)}</td>` +
+        `<td>${fmtNum(c.prima, 0)}</td>` +
+        `<td class="bal ${cls(c.balanceAnual, 0.5)}">${signed(c.balanceAnual, v => fmtNum(v, 0))}</td></tr>`;
+    });
+    $('#cmpTable').innerHTML = html + '</tbody>';
+    $('#cmpMore').innerHTML = sorted.length > ROWS_COLLAPSED
+      ? `<button class="link" type="button" id="toggleRows">${verTodas ? 'Ver menos' : `Ver las ${sorted.length} combinaciones`}</button>`
+      : '';
+  }
+
+  function aplicarMask(mask) {
+    state.productos.forEach((p, j) => { p.activo = !!(mask & (1 << j)); });
+    renderProductos(); recalc();
+  }
+  $('#cmpTable').addEventListener('click', e => {
+    const row = e.target.closest('tr[data-mask]');
+    if (row) { e.preventDefault(); aplicarMask(Number(row.dataset.mask)); }
+  });
+  document.addEventListener('click', e => {
+    if (e.target.id === 'toggleRows') { verTodas = !verTodas; recalc(); }
+  });
+
+  function renderAmort(ctx) {
+    const { sel, path } = ctx;
+    const conEur = state.modalidad !== 'fijo';
+    const iv = ctx.iv;
+    $('#amortTitle').textContent = conEur ? 'Revisiones y cuadro de amortización anual' : 'Cuadro de amortización anual';
+    let html = `<thead><tr><th>Año</th>${conEur ? '<th>Euríbor<small>%</small></th>' : ''}<th>Tipo<small>%</small></th><th>Cuota<small>€/mes</small></th>` +
+      `<th>Intereses<small>€/año</small></th><th>Amortizado<small>€/año</small></th><th>Pendiente<small>€</small></th></tr></thead><tbody>`;
+    let prev = null;
+    sel.s.filas.forEach((f, y) => {
+      const d = prev !== null ? f.cuota - prev : 0;
+      const usaEur = iv !== null && y >= (state.modalidad === 'mixto' ? iv : 0);
+      html += `<tr><td>${f.anio}</td>${conEur ? `<td>${usaEur ? fmtNum(path[y], rateDec(path[y])) : '—'}</td>` : ''}<td>${fmtNum(f.tipo)}</td>` +
+        `<td>${fmtNum(f.cuota)}${Math.abs(d) >= 0.005 ? `<span class="chg ${cls(-d)}">${signed(d, fmtNum)}</span>` : ''}</td>` +
+        `<td>${fmtNum(f.intereses)}</td><td>${fmtNum(f.amortizado)}</td><td>${fmtNum(f.pendiente)}</td></tr>`;
+      prev = f.cuota;
+    });
+    $('#amortTable').innerHTML = html + '</tbody>';
+  }
+
+  /* ---------- Tema ---------- */
+  const root = document.documentElement;
+  const isDark = () => root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  function updateThemeIcon() {
+    const d = isDark();
+    $('#icoSun').style.display = d ? '' : 'none';
+    $('#icoMoon').style.display = d ? 'none' : '';
+  }
+  $('#theme').addEventListener('click', () => {
+    const t = isDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', t);
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) { /* sin almacenamiento */ }
+    updateThemeIcon();
+  });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateThemeIcon);
+
+  /* ---------- Inicio ---------- */
+  fillInputs();
+  renderPresetSelect();
+  renderProductos();
+  renderManual();
+  updateModeUI();
+  updateThemeIcon();
+  recalc();
+})();
+</script>
+</body>
+</html>
