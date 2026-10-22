@@ -184,6 +184,7 @@ input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; m
 .toolbar .f { margin: 0; }
 .src { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
 .src a { color: var(--accent); }
+.src .link { font-size: inherit; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 th, td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); vertical-align: middle; }
 th { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--head); white-space: nowrap; line-height: 1.25; }
@@ -202,15 +203,27 @@ th.l, td.l { text-align: left; }
   .ptable .w-chk, .ptable .w-del { width: 24px; }
   .ptable .largo { display: none; }
   .ptable .corto { display: inline; }
-  .pname { font-size: 13px; padding: 3px 2px; }
+  .pline { font-size: 13px; padding: 3px 2px; }
 }
-.pname {
-  width: 100%; border: 1px solid transparent; background: transparent; color: var(--text); font: inherit;
-  padding: 3px 4px; border-radius: 4px;
+/* Nombre editable en línea: puede ocupar varias líneas y la llamada «1» va pegada a la última palabra. */
+.pline {
+  border: 1px solid transparent; border-radius: 4px; padding: 3px 4px; color: var(--text); cursor: text;
+  line-height: 1.35; overflow-wrap: anywhere;
 }
-.pname:hover, .pname:focus { border-color: var(--border-strong); background: var(--input); outline: 0; }
+.pline:hover, .pline:focus-within { border-color: var(--border-strong); background: var(--input); }
+.pname { outline: 0; }
+.pname:empty { display: inline-block; min-width: 4em; }
+.ref {
+  border: 0; vertical-align: 2px; margin-left: 3px; border-radius: 3px; background: var(--accent-soft); color: var(--accent);
+  font-family: inherit; font-size: 10px; font-weight: 600; line-height: 1; padding: 2px 4px; cursor: pointer;
+}
+span.ref { display: inline-block; cursor: default; margin: 0 2px 0 0; vertical-align: 1px; }
+.pline button.ref { line-height: 1.2; }
+button.ref:hover { background: var(--accent); color: var(--bg); }
+#nota1 { transition: color .15s; }
+#nota1.hl { color: var(--text); font-weight: 600; }
 .pnote { font-size: 11px; color: var(--faint); padding: 0 5px; }
-tr.off .pname, tr.off .cell-inp { color: var(--faint); }
+tr.off .pline, tr.off .cell-inp { color: var(--faint); }
 .del { border: 0; background: none; color: var(--faint); cursor: pointer; font-size: 15px; line-height: 1; padding: 4px; border-radius: 4px; }
 .del:hover { color: var(--bad); background: var(--bad-soft); }
 .ptable tfoot td { border-bottom: 0; font-size: 13px; padding-top: 8px; }
@@ -467,7 +480,7 @@ footer p { margin: 0 0 4px; }
         </tr></tfoot>
       </table>
       <div id="overTope"></div>
-      <p class="hint" style="margin:10px 0 0">Si un seguro lo contratarías de todos modos, pon como coste solo lo que pagas de más frente a la alternativa más barata.</p>
+      <p class="hint" id="nota1" style="margin:10px 0 0"><span class="ref">1</span> Si un producto lo contratarías de todos modos, pon como coste solo lo que pagas de más frente a la alternativa más barata.</p>
       </div>
     </section>
 
@@ -589,12 +602,13 @@ footer p { margin: 0 0 4px; }
   const ROWS_COLLAPSED = 12;
 
   /* ---------- Presets de bancos ---------- */
+  // Copia de bancos.json (fuentes y condiciones de cada banco): al actualizar un banco, cambia ambos.
   // [nombre, bonificación p.p., coste anual €, requisito]
   const PRESETS = {
     santander: {
       nombre: 'Santander', tope: 1.00,
       fuente: 'Web de Banco Santander (oferta válida hasta el 15/11/2026): 3,96 % sin bonificar / 2,96 % bonificado; los 6 primeros meses, 2,96 % para todos. Costes = primas mínimas exigidas. Topes por familia: seguros 1,00 %, ahorro 0,30 %. Primera revisión a los 6 meses, después cada 12.',
-      url: 'https://www.bancosantander.es/particulares/hipotecas/hipoteca-fija',
+      fuentes: [{ nombre: 'Web', url: 'https://www.bancosantander.es/particulares/hipotecas/hipoteca-fija' }],
       productos: [
         ['Nómina + Bizum o tarjeta de crédito', 0.50, 0, 'Nómina ≥ 1.000 €/mes (pensión ≥ 600 €); Bizum o 6 usos de tarjeta de crédito en 3 meses'],
         ['Seguro de protección de préstamos', 0.30, 300, 'Prima > 300 €/año'],
@@ -606,7 +620,7 @@ footer p { margin: 0 0 4px; }
     bbva: {
       nombre: 'BBVA', tope: 1.00,
       fuente: 'FIPRE de BBVA (02/10/2026) y web: 3,95 % sin bonificar / 2,95 % bonificado (20 a 30 años), con 1 punto de bonificación el primer mes para todos. Dos bloques de 0,50; en fija, revisión semestral. La FIPRE no detalla primas: costes estimados.',
-      url: 'https://www.bbva.es/content/dam/public-web/bbvaes/documents/productos/hipotecas/FIPRE.pdf',
+      fuentes: [{ nombre: 'FIPRE', url: 'https://www.bbva.es/content/dam/public-web/bbvaes/documents/productos/hipotecas/FIPRE.pdf' }],
       productos: [
         ['Ingresos domiciliados + seguro de hogar', 0.50, 250, 'Nómina ≥ 600 €/mes (pensión ≥ 300 €) durante 6 meses seguidos y Multirriesgo Hogar BBVA Allianz'],
         ['Seguro de amortización de préstamo', 0.50, 350, 'Debe cubrir al menos el 50 % del préstamo (máx. 150.000 €)']
@@ -615,7 +629,7 @@ footer p { margin: 0 0 4px; }
     caixabank: {
       nombre: 'CaixaBank', tope: 1.00,
       fuente: 'Web de CaixaBank: 3,80 % sin bonificar / 2,80 % bonificado (30 años). Cumplimiento revisado cada mes. Vida y salud son excluyentes entre sí. Primas de los ejemplos del banco (vida para 30 años y 100 % del capital); vida parcial y salud, estimadas. Cuenta: 15 €/trimestre.',
-      url: 'https://www.caixabank.es/particular/hipotecas.html',
+      fuentes: [{ nombre: 'Web', url: 'https://www.caixabank.es/particular/hipotecas.html' }],
       comisionCuenta: 60,
       productos: [
         ['Nómina + 3 recibos + compras con tarjeta', 0.35, 36, 'Ingresos > 600 €/mes en los últimos 6 meses; 3 compras con tarjeta en 3 meses. Tarjeta: 36 €/año'],
@@ -629,7 +643,7 @@ footer p { margin: 0 0 4px; }
     sabadell: {
       nombre: 'Sabadell', tope: 1.00,
       fuente: 'Reparto de la FIPRE de la hipoteca fija bonificada (julio 2025); tipos y primas de la web (3,75 % sin bonificar / 2,75 % bonificado; vida para 30 años). Bonificaciones acumulativas con revisión semestral.',
-      url: 'https://www.bancsabadell.com/bsnacional/es/particulares/hipotecas/hipoteca-fija/',
+      fuentes: [{ nombre: 'Web', url: 'https://www.bancsabadell.com/bsnacional/es/particulares/hipotecas/hipoteca-fija/' }, { nombre: 'FIPRE', url: 'https://www.bancsabadell.com/bsnacional/es/fipre_cas_hipoteca_fija_bonificada.pdf' }],
       productos: [
         ['Nómina, pensión o ingresos de autónomo', 0.40, 0, ''],
         ['Seguro de vida', 0.40, 254, '63,38 €/trimestre'],
@@ -640,7 +654,7 @@ footer p { margin: 0 0 4px; }
     bankinter: {
       nombre: 'Bankinter', tope: 1.30,
       fuente: 'Web de Bankinter (oferta válida hasta el 15/11/2026): 4,80 % sin bonificar / 3,50 % bonificado. Requiere ingresos > 2.500 €/mes. Primas de su ejemplo; la de vida es la del primer año para 30 años y es renovable, así que subirá con la edad. Cuenta: 45 €/año. Revisión anual.',
-      url: 'https://www.bankinter.com/banca/hipotecas-prestamos/hipotecas/hipoteca-fija',
+      fuentes: [{ nombre: 'Web', url: 'https://www.bankinter.com/banca/hipotecas-prestamos/hipotecas/hipoteca-fija' }],
       comisionCuenta: 45,
       productos: [
         ['Cuenta Nómina, Profesional o No-Nómina', 0.30, 0, ''],
@@ -652,7 +666,7 @@ footer p { margin: 0 0 4px; }
     ing: {
       nombre: 'ING', tope: 0.50,
       fuente: 'FIPRE de la Hipoteca NARANJA Variable (09/10/2026): E + 1,10 % sin condiciones, E + 1,00 % con nómina y hogar, E + 0,60 % con nómina, hogar y vida. Primas de la FIPRE (vida para 30 años). Los tipos de referencia de ing.es (fija 3,79 % / 2,99 %) muestran más diferencia; la FIPRE es el documento oficial.',
-      url: 'https://www.ing.es/sobre-ing/pdf/InfPrecontractualFIPRE.pdf',
+      fuentes: [{ nombre: 'FIPRE', url: 'https://www.ing.es/sobre-ing/pdf/InfPrecontractualFIPRE.pdf' }],
       productos: [
         ['Nómina o saldo + seguro de hogar', 0.10, 269, 'Nómina o ingresos ≥ 600 €/mes, o saldo diario ≥ 2.000 €; HogarSeguro 269 €/año', 'nivel'],
         ['Nómina o saldo + hogar + seguro de vida', 0.50, 606, 'Lo anterior más Seguro de Vida Hipoteca por el 100 % del préstamo (337 €/año). El seguro de vida solo bonifica junto con nómina y hogar', 'nivel']
@@ -660,8 +674,8 @@ footer p { margin: 0 0 4px; }
     },
     kutxabank: {
       nombre: 'Kutxabank', tope: 1.10,
-      fuente: 'Reparto informado por el banco para la hipoteca PH Joven (oct. 2026); la FIPRE oficial (mayo 2026) no publica porcentajes, que fija la oferta personalizada. La bonificación por edad dura hasta los 35 años, pero el simulador la aplica a todo el plazo. Revisión anual. Seguro de hogar Kutxabank: 397 €/año en la FIPRE, frente a 101 € del básico obligatorio.',
-      url: 'https://portal.kutxabank.es/cs/Satellite?blobcol=urldata&blobheader=application%2Fpdf&blobheadername1=content-type&blobheadername2=Expires&blobheadername3=MDT-Type&blobheadername4=Content-disposition&blobheadervalue1=application%2Fpdf&blobheadervalue2=Thu%2C+10+Dec+2030+16%3A00%3A00+GMT&blobheadervalue3=abinary%3Bcharset%3DUTF-8&blobheadervalue4=inline%3B+filename%3D%22kb+fipre+%28p.h.%29-cas+05_26.pdf%22&blobkey=id&blobtable=MungoBlobs&blobwhere=1312554618055&ssbinary=true',
+      fuente: 'Reparto informado por el banco para la hipoteca PH Joven (oct. 2026); la FIPRE oficial (octubre 2026) no publica porcentajes, que fija la oferta personalizada. La bonificación por edad dura hasta los 35 años, pero el simulador la aplica a todo el plazo. Revisión anual. Seguro de hogar Kutxabank: 397 €/año en la FIPRE, frente a 101 € del básico obligatorio.',
+      fuentes: [{ nombre: 'FIPRE', url: 'https://portal.kutxabank.es/cs/Satellite?blobcol=urldata&blobheader=application%2Fpdf&blobheadername1=content-type&blobheadername2=Expires&blobheadername3=MDT-Type&blobheadername4=Content-disposition&blobheadervalue1=application%2Fpdf&blobheadervalue2=Thu%2C+10+Dec+2030+16%3A00%3A00+GMT&blobheadervalue3=abinary%3Bcharset%3DUTF-8&blobheadervalue4=inline%3B+filename%3D%22kb+fipre+%28p.h.%29-cas+09_26.pdf%22&blobkey=id&blobtable=MungoBlobs&blobwhere=1312565561177&ssbinary=true' }],
       productos: [
         ['Nómina + tarjetas', 0.60, 0, 'Domiciliar la nómina; consumo con tarjetas ≈ 1.200 €/año'],
         ['Seguro de hogar', 0.10, 300, 'Prima única ≈ 1.500 € cada 5 años', '', 1500],
@@ -673,7 +687,7 @@ footer p { margin: 0 0 4px; }
     ibercaja: {
       nombre: 'Ibercaja', tope: 1.00,
       fuente: 'Hipoteca Fija Vamos (web de Ibercaja, válida hasta el 31/10/2026): 3,55 % sin bonificar / 2,55 % bonificado, en un único paquete; el primer año, 2,55 % para todos. Desde 100.000 €. Revisión semestral. Primas de su ejemplo. Cuenta: 30 €/trimestre.',
-      url: 'https://www.ibercaja.es/particulares/hipotecas-prestamos/hipotecas/hipoteca-vamos-fija/',
+      fuentes: [{ nombre: 'Web', url: 'https://www.ibercaja.es/particulares/hipotecas-prestamos/hipotecas/hipoteca-vamos-fija/' }],
       comisionCuenta: 120,
       productos: [
         ['Paquete: nómina, tarjeta, recibos, hogar, vida y fondo', 1.00, 684, 'Nómina ≥ 2.500 €/mes; tarjeta ≥ 12 operaciones/semestre; ≥ 3 recibos; aportación ≥ 75 €/mes a fondo Ibercaja. Coste: hogar 242 €, vida 400 €, tarjeta 42 €']
@@ -682,7 +696,7 @@ footer p { margin: 0 0 4px; }
     unicaja: {
       nombre: 'Unicaja', tope: 1.00,
       fuente: 'Web de Unicaja: 4,20 % sin bonificar / 3,20 % bonificado con nómina ≥ 2.000 € (4,40 % / 3,40 % con menos); el primer semestre, 3,25 %. La web solo publica la combinación de máxima bonificación, sin reparto por producto. Costes de su ejemplo; la cuenta (120 €/año) solo se cobra con bonificación.',
-      url: 'https://www.unicajabanco.es/es/particulares/hipotecas-y-prestamos/hipotecas/hipoteca-tipo-fijo',
+      fuentes: [{ nombre: 'Web', url: 'https://www.unicajabanco.es/es/particulares/hipotecas-y-prestamos/hipotecas/hipoteca-tipo-fijo' }],
       productos: [
         ['Paquete: nómina, tarjeta, hogar, vida y plan de pensiones', 1.00, 829, 'Tarjeta ≥ 600 €/semestre; aportación al plan del 0,6 % semestral del capital pendiente. Coste: hogar 268 €, vida 359 €, cuenta 120 €, tarjeta 48 €, gestión del plan 35 €']
       ]
@@ -690,7 +704,7 @@ footer p { margin: 0 0 4px; }
     abanca: {
       nombre: 'ABANCA', tope: 1.00, comisionCuenta: 160,
       fuente: 'Hipoteca Mari Carmen Fija (web de ABANCA): 4,15 % sin bonificar / 3,15 % bonificado. Las opciones de nómina son excluyentes entre sí. Primas de su ejemplo (30 años, 150.000 €), repartidas por año a 30 años. Cuenta: 40 €/trimestre. Revisión anual.',
-      url: 'https://www.abanca.com/es/hipotecas/hipoteca-maricarmen-fija/',
+      fuentes: [{ nombre: 'Web', url: 'https://www.abanca.com/es/hipotecas/hipoteca-maricarmen-fija/' }],
       productos: [
         ['Nómina de 800 a 2.500 €/mes o seguros sociales', 0.20, 0, 'Ingreso recurrente en un único apunte', 'nomina'],
         ['Nómina ≥ 2.500 €/mes', 0.40, 0, 'O ≥ 3.500 € en varios ingresos, o seguros sociales + saldo medio ≥ 2.000 €', 'nomina'],
@@ -960,7 +974,7 @@ footer p { margin: 0 0 4px; }
   /* ---------- Presets ---------- */
   function renderPresetSelect() {
     const sel = $('#preset');
-    sel.innerHTML = '<option value="custom">Personalizado</option>' +
+    sel.innerHTML = '<option value="custom">Ejemplo / personalizado</option>' +
       Object.entries(PRESETS).map(([k, p]) => `<option value="${k}">${p.nombre}</option>`).join('');
     sel.value = state.preset;
     renderPresetSrc();
@@ -968,9 +982,17 @@ footer p { margin: 0 0 4px; }
   function renderPresetSrc() {
     const p = PRESETS[state.preset];
     $('#presetSrc').innerHTML = p
-      ? escHtml(p.fuente) + (p.url ? ` <a href="${p.url}" target="_blank" rel="noopener">Fuente</a>` : '')
-      : 'Productos y valores propios. Elige un banco para cargar sus condiciones publicadas.';
+      ? escHtml(p.fuente) + ' ' + (p.fuentes.length > 1 ? 'Fuentes: ' : '') +
+        p.fuentes.map(f => `<a href="${f.url}" target="_blank" rel="noopener">${p.fuentes.length > 1 ? escHtml(f.nombre) : 'Fuente'}</a>`).join(' · ')
+      : 'Valores de ejemplo. Carga las condiciones publicadas de: ' +
+        Object.entries(PRESETS).map(([k, p]) => `<button class="link" type="button" data-preset="${k}">${escHtml(p.nombre)}</button>`).join(' · ');
   }
+  $('#presetSrc').addEventListener('click', e => {
+    const k = e.target.dataset.preset;
+    if (!k) return;
+    $('#preset').value = k;
+    $('#preset').dispatchEvent(new Event('change'));
+  });
   $('#preset').addEventListener('change', e => {
     const k = e.target.value;
     if (state.preset === 'custom') {
@@ -1014,7 +1036,7 @@ footer p { margin: 0 0 4px; }
     $('#prods').innerHTML = state.productos.map(p => `
       <tr data-id="${p.id}"${p.activo ? '' : ' class="off"'}>
         <td class="w-chk"><input type="checkbox" data-f="activo"${p.activo ? ' checked' : ''} aria-label="Incluir ${escHtml(p.nombre)}"></td>
-        <td class="l"><input class="pname" type="text" data-f="nombre" value="${escHtml(p.nombre)}" aria-label="Nombre del producto">${notaDe(p) ? `<div class="pnote">${escHtml(notaDe(p))}</div>` : ''}${p.primaUnica > 0
+        <td class="l"><div class="pline"><span class="pname" contenteditable="plaintext-only" role="textbox" spellcheck="false" data-f="nombre" aria-label="Nombre del producto">${escHtml(p.nombre)}</span><button class="ref" type="button" title="Ver nota 1" aria-label="Ver nota 1"${p.prima > 0 ? '' : ' hidden'}>1</button></div>${notaDe(p) ? `<div class="pnote">${escHtml(notaDe(p))}</div>` : ''}${p.primaUnica > 0
           ? `<label class="chk pnote"><input type="checkbox" data-f="financiar"${p.financiar ? ' checked' : ''}>Financiar la prima única (${eur(p.primaUnica)}) en el préstamo</label>` : ''}</td>
         <td><input class="cell-inp" type="text" inputmode="decimal" data-f="bonif" value="${fmtInput(p.bonif, 'rate')}" aria-label="Bonificación"></td>
         <td><input class="cell-inp" type="text" inputmode="decimal" data-f="prima" value="${fmtInput(p.prima, 'auto')}" aria-label="Coste anual"></td>
@@ -1022,6 +1044,28 @@ footer p { margin: 0 0 4px; }
       </tr>`).join('') || '<tr><td colspan="5" class="l hint">Sin productos.</td></tr>';
     $('#addProd').disabled = state.productos.length >= MAX_PRODS;
   }
+  // Coloca el cursor al final del nombre (y opcionalmente lo selecciona entero).
+  function editarNombre(el, seleccionar) {
+    el.focus();
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    if (!seleccionar) r.collapse(false);
+    const sel = getSelection();
+    sel.removeAllRanges(); sel.addRange(r);
+  }
+  // Un clic en el hueco del recuadro también edita el nombre; Intro termina la edición.
+  $('#prods').addEventListener('mousedown', e => {
+    if (!e.target.classList.contains('pline')) return;
+    e.preventDefault();
+    editarNombre(e.target.querySelector('.pname'));
+  });
+  $('#prods').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.dataset.f === 'nombre') { e.preventDefault(); e.target.blur(); }
+  });
+  // La llamada «1» resalta la nota; cualquier otro clic la devuelve a su estilo normal.
+  document.addEventListener('click', e => {
+    $('#nota1').classList.toggle('hl', !!e.target.closest('#prods .ref'));
+  });
   const prodOf = el => {
     const row = el.closest('tr[data-id]');
     return row ? [row, state.productos.find(p => String(p.id) === row.dataset.id)] : [null, null];
@@ -1043,11 +1087,16 @@ footer p { margin: 0 0 4px; }
     if (!f || f === 'activo') return;
     const [, p] = prodOf(e.target);
     if (!p) return;
-    if (f === 'nombre') { p.nombre = e.target.value; markCustom(); recalc(); return; }
+    if (f === 'nombre') { p.nombre = e.target.textContent.replace(/\s*\n\s*/g, ' '); markCustom(); recalc(); return; }
     const v = parseNum(e.target.value);
     const ok = Number.isFinite(v) && v >= 0 && v <= (f === 'bonif' ? 20 : 1e7);
     e.target.classList.toggle('invalid', !ok);
-    if (ok) { p[f] = v; markCustom(); recalc(); }
+    if (!ok) return;
+    p[f] = v;
+    // El coste depende de cada persona (los bancos publican la prima mínima): no cambia las condiciones del banco.
+    if (f === 'prima') e.target.closest('tr').querySelector('.ref').hidden = !(v > 0);
+    else markCustom();
+    recalc();
   });
   $('#prods').addEventListener('focusout', e => {
     const f = e.target.dataset.f;
@@ -1067,7 +1116,7 @@ footer p { margin: 0 0 4px; }
     markCustom(); renderProductos(); recalc();
     const inputs = document.querySelectorAll('#prods .pname');
     const last = inputs[inputs.length - 1];
-    if (last) { last.focus(); last.select(); }
+    if (last) editarNombre(last, true);
   });
 
   /* ---------- Recalcular ---------- */
